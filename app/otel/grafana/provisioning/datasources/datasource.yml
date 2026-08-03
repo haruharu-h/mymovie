@@ -1,0 +1,23 @@
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+
+  - name: Jaeger
+    type: jaeger
+    access: proxy
+    url: http://jaeger:16686 # Elasticsearchではなく、Jaeger自身のクエリAPIを向く
+
+  - name: Elasticsearch-Logs
+    type: elasticsearch
+    access: proxy
+    url: http://elasticsearch:9200
+    jsonData:
+      index: logs-mymovie-otel # データストリーム名をそのまま指定（日付パターンではないのでintervalは不要）
+      timeField: "@timestamp"
+      logMessageField: body.text
+      logLevelField: severity_text

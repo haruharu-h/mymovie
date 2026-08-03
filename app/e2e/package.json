@@ -1,0 +1,11 @@
+{
+  "name": "e2e",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test:e2e": "./run-e2e.sh"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.0"
+  }
+}

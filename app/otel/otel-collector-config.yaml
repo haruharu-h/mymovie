@@ -1,0 +1,40 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+
+exporters:
+  otlp/jaeger:
+    endpoint: jaeger:4317
+    tls:
+      insecure: true
+  debug:
+    verbosity: detailed
+  prometheus:
+    endpoint: 0.0.0.0:8889 # Prometheusがここにスクレイプしに来る
+  elasticsearch/logs:
+    endpoints: ["http://elasticsearch:9200"] # Jaegerが使っているのと同じElasticsearchを使い回す
+    # デフォルトのotelマッピングモードはデータストリーム必須（require_data_stream: true）。
+    # logs-mymovie-* という名前は事前にdata_stream用のindex templateを作成済み（データストリーム名の慣習: <type>-<dataset>-<namespace>）
+    logs_index: logs-mymovie-otel
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp/jaeger, debug]
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [prometheus]
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [elasticsearch/logs]
