@@ -1,4 +1,5 @@
-import { Link, useLocation } from 'react-router'
+import { Link, useLocation, useNavigate } from 'react-router'
+import { useAuth } from '@/contexts/AuthContext'
 
 const NAV_ITEMS = [
   { to: '/', label: 'マイレビュー' },
@@ -9,6 +10,13 @@ const NAV_ITEMS = [
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation()
+  const { logout } = useAuth()
+  const navigate = useNavigate()
+
+  const handleLogout = async () => {
+    await logout()
+    navigate('/signin', { replace: true })
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -27,6 +35,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 {label}
               </Link>
             ))}
+            <button
+              onClick={handleLogout}
+              className="shrink-0 whitespace-nowrap text-sm text-gray-500 hover:text-black"
+            >
+              ログアウト
+            </button>
           </nav>
         </div>
       </header>
