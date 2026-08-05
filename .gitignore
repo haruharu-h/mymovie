@@ -35,3 +35,16 @@ playwright/.cache/
 /docs/
 /notes/
 /CLAUDE.md
+
+# Terraform（.terraform.lock.hclとterraform.tfvarsはコミット対象。ここでは除外しない）
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+# Secret Manager用の機密値。terraform.tfvars（非機密）とは別ファイルにして明示的に除外
+secrets.auto.tfvars
