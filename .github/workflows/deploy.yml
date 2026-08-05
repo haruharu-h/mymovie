@@ -61,10 +61,18 @@ jobs:
           service_account: ${{ env.DEPLOYER_SERVICE_ACCOUNT }}
       - uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f # v2.2.1
       - run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
+      # GitHub Actionsはジョブごとにまっさらな使い捨てVMのため、Dockerのレイヤーキャッシュは
+      # 実行のたびに失われる。Artifact Registry自体をキャッシュの置き場所にして、次回以降の
+      # 実行が前回のレイヤーを再利用できるようにする（docker buildがbuildxをデフォルトの
+      # ビルダーとして使うため、追加のactionを導入せず引数だけで実現できる）
       - id: build
         run: |
           IMAGE="${{ env.ARTIFACT_REGISTRY_REPO }}/backend:${{ github.sha }}"
-          docker build --target production -t "$IMAGE" app/backend
+          CACHE_IMAGE="${{ env.ARTIFACT_REGISTRY_REPO }}/backend:buildcache"
+          docker build --target production \
+            --cache-from "type=registry,ref=$CACHE_IMAGE" \
+            --cache-to "type=registry,ref=$CACHE_IMAGE,mode=max" \
+            -t "$IMAGE" app/backend
           docker push "$IMAGE"
           echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
 
