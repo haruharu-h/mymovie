@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { tokenStore } from '../lib/tokenStore'
+import { resolveApiPath } from '../lib/apiClient'
 import type { CurrentUser } from '../types/user'
 
 type AuthContextType = {
@@ -28,7 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const fetchCurrentUser = async () => {
-    const res = await fetch('/api/users/me', {
+    const res = await fetch(resolveApiPath('/api/users/me'), {
       headers: { Authorization: `Bearer ${tokenStore.get()}` },
       credentials: 'include',
     })
@@ -51,7 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const register = async (email: string, password: string) => {
-    const res = await fetch('/api/auth/register', {
+    const res = await fetch(resolveApiPath('/api/auth/register'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -66,7 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const login = async (email: string, password: string) => {
-    const res = await fetch('/api/auth/login', {
+    const res = await fetch(resolveApiPath('/api/auth/login'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -81,7 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const logout = async () => {
-    await fetch('/api/auth/logout', {
+    await fetch(resolveApiPath('/api/auth/logout'), {
       method: 'POST',
       credentials: 'include',
     })
@@ -91,7 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refresh = (): Promise<void> => {
     if (refreshPromiseRef.current) return refreshPromiseRef.current
     refreshPromiseRef.current = (async () => {
-      const res = await fetch('/api/auth/refresh', {
+      const res = await fetch(resolveApiPath('/api/auth/refresh'), {
         method: 'POST',
         credentials: 'include',
       })

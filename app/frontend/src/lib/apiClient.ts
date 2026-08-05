@@ -1,5 +1,12 @@
 import { tokenStore } from './tokenStore'
 
+// 開発時はvite.config.tsのserver.proxyが/apiをバックエンドに転送してくれるため相対パスのままでよいが、
+// 本番のFirebase Hostingにはその転送機能が無いため、バックエンドの絶対URLを直接組み立てる必要がある
+export function resolveApiPath(path: string): string {
+  if (import.meta.env.DEV) return path
+  return `${import.meta.env.VITE_BACKEND_URL}${path.replace(/^\/api/, '')}`
+}
+
 // バックエンドのAppErrorに対応。呼び出し側はres.okを見る必要がなく、
 // 失敗時はここでthrowされたApiErrorをcatchすればよい。
 export class ApiError extends Error {
@@ -24,7 +31,7 @@ function isTokenExpired(token: string): boolean {
 }
 
 async function refreshAccessToken(): Promise<string | null> {
-  const res = await fetch('/api/auth/refresh', {
+  const res = await fetch(resolveApiPath('/api/auth/refresh'), {
     method: 'POST',
     credentials: 'include',
   })
@@ -65,7 +72,7 @@ export async function apiClient<T = unknown>(path: string, options: RequestInit 
     headers.set('Authorization', `Bearer ${token}`)
   }
 
-  const res = await fetch(path, { ...options, headers, credentials: 'include' })
+  const res = await fetch(resolveApiPath(path), { ...options, headers, credentials: 'include' })
   const body = await parseBody(res)
 
   if (!res.ok) {

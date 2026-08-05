@@ -61,7 +61,9 @@ export async function googleAuthRoutes(app: FastifyInstance, deps: GoogleAuthRou
     reply.setCookie('refresh_token', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      // 本番はフロントエンド(Firebase Hosting)とバックエンド(Cloud Run)が別ドメインのクロスサイト
+      // 構成のため'none'が必須（'strict'/'lax'はcrossサイトのfetchにCookieを一切送らない）
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
       path: '/',
     })
 

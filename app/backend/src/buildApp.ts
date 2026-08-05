@@ -46,8 +46,9 @@ export function buildApp(deps: AppDeps, options: BuildAppOptions = {}): FastifyI
   app.setErrorHandler(errorHandler)
   app.setNotFoundHandler(notFoundHandler)
 
+  // FRONTEND_URL未設定（テスト等）はローカルのフロントエンドのデフォルト値にフォールバックする
   app.register(cors, {
-    origin: 'http://localhost:5173',
+    origin: process.env.FRONTEND_URL ?? 'http://localhost:5173',
     credentials: true,
   })
   app.register(cookie)
