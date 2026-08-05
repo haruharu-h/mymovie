@@ -64,20 +64,22 @@ jobs:
       # buildxのデフォルト("docker")ドライバはレジストリへのキャッシュ書き出し
       # (--cache-to type=registry)を扱えないため、それをサポートする"docker-container"
       # ドライバのbuilderを明示的に作成して使う（追加のactionは使わず、docker CLI標準の
-      # サブコマンドのみで行う）
-      - run: docker buildx create --use --driver docker-container
+      # サブコマンドのみで行う）。名前を明示し、以降のステップでも--builderで名指しすることで
+      # 「現在のbuilder」という暗黙の状態に依存しない
+      - run: docker buildx create --name ci-builder --driver docker-container --bootstrap
       # GitHub Actionsはジョブごとにまっさらな使い捨てVMのため、Dockerのレイヤーキャッシュは
       # 実行のたびに失われる。Artifact Registry自体をキャッシュの置き場所にして、次回以降の
-      # 実行が前回のレイヤーを再利用できるようにする
+      # 実行が前回のレイヤーを再利用できるようにする。docker-containerドライバはビルド結果を
+      # ローカルのDocker daemonに自動ロードしないため、`docker build`+`docker push`を分けず
+      # `docker buildx build --push`で直接レジストリに送る
       - id: build
         run: |
           IMAGE="${{ env.ARTIFACT_REGISTRY_REPO }}/backend:${{ github.sha }}"
           CACHE_IMAGE="${{ env.ARTIFACT_REGISTRY_REPO }}/backend:buildcache"
-          docker build --target production \
+          docker buildx build --builder ci-builder --target production \
             --cache-from "type=registry,ref=$CACHE_IMAGE" \
             --cache-to "type=registry,ref=$CACHE_IMAGE,mode=max" \
-            -t "$IMAGE" app/backend
-          docker push "$IMAGE"
+            -t "$IMAGE" --push app/backend
           echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
 
   migrate:
