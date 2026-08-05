@@ -79,7 +79,13 @@ describe('JwtService', () => {
     it('改ざんされたトークンは検証に失敗する', async () => {
       const service = new JwtService()
       const token = await service.generateAccessToken('user-1')
-      const tampered = token.slice(0, -1) + (token.endsWith('a') ? 'b' : 'a')
+      // 署名部分の末尾1文字はbase64url化した際に実質2bitしか意味を持たない余りの文字で、
+      // 'a'↔'b'のような一部の入れ替えではデコード結果のバイト列が変わらずtamperに失敗する
+      // （テストがflakyになる）ため、最後から2文字目（曖昧さの無い位置）を改ざんする
+      const targetIndex = token.length - 2
+      const target = token[targetIndex]
+      const replacement = target === 'a' ? 'b' : 'a'
+      const tampered = token.slice(0, targetIndex) + replacement + token.slice(targetIndex + 1)
 
       await expect(service.verifyAccessToken(tampered)).rejects.toThrow()
     })
