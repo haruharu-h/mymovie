@@ -1,0 +1,144 @@
+name: Deploy
+
+# mainブランチへのマージ後（信頼できるコードのみ）に限定する。
+# Workload Identity連携で得られる一時アクセストークンは、同じジョブ内で動く
+# コードなら誰でも読めてしまうため、外部PRの中身を特権つきで実行するトリガー
+# （pull_request_target等）は使わない。詳細: docs/decisions.md「フェーズ7-4」
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app/backend/**'
+      - 'app/frontend/**'
+      - '.github/workflows/deploy.yml'
+
+env:
+  GCP_PROJECT_ID: your-project-id
+  GCP_REGION: us-central1
+  # terraform output github_actions_workload_identity_provider / github_actions_service_account_email
+  # と一致させる。Cloud RunのURLと同じ「チキンエッグ」構造でここに直書きしている
+  # （app/infra/wif.tf自身がこの値を生成する側のため、自己参照はできない）
+  WORKLOAD_IDENTITY_PROVIDER: projects/your-project-number/locations/global/workloadIdentityPools/github-actions/providers/github-actions
+  DEPLOYER_SERVICE_ACCOUNT: deployer-service-account@your-project-id.iam.gserviceaccount.com
+  ARTIFACT_REGISTRY_REPO: us-central1-docker.pkg.dev/your-project-id/mymovie-backend
+  # terraform output相当。app/infra/cloud_run.tfのlocal.backend_url/frontend_urlと一致させる
+  BACKEND_URL: https://backend.example.com
+  FRONTEND_URL: https://your-project-id.web.app
+
+permissions:
+  contents: read
+
+jobs:
+  test-backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app/backend
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: app/backend/.nvmrc
+      - run: npm ci
+      - run: npm test
+      # Testcontainersが実DB(PostgreSQL)コンテナを起動する。GitHub Actionsのubuntu-latest
+      # ランナーはDockerが標準で使えるため、ローカルと同じコマンドがそのまま動く
+      - run: npm run test:integration
+
+  build-and-push:
+    needs: test-backend
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # OIDCトークンを要求するために必須
+    outputs:
+      image: ${{ steps.build.outputs.image }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed # v2.1.13
+        with:
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f # v2.2.1
+      - run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
+      - id: build
+        run: |
+          IMAGE="${{ env.ARTIFACT_REGISTRY_REPO }}/backend:${{ github.sha }}"
+          docker build --target production -t "$IMAGE" app/backend
+          docker push "$IMAGE"
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+
+  migrate:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    defaults:
+      run:
+        working-directory: app/backend
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: app/backend/.nvmrc
+      - run: npm ci
+      - uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed # v2.1.13
+        with:
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f # v2.2.1
+      # DATABASE_URLをGitHub Secretsに複製せず、Secret Manager(SSOT)からその場で取得する
+      - name: Fetch DATABASE_URL from Secret Manager
+        run: |
+          echo "::add-mask::$(gcloud secrets versions access latest --secret=database_url --project=${{ env.GCP_PROJECT_ID }})"
+          echo "DATABASE_URL=$(gcloud secrets versions access latest --secret=database_url --project=${{ env.GCP_PROJECT_ID }})" >> "$GITHUB_ENV"
+      # DBが先行(旧コード+新DB)、アプリのデプロイはこの後。理由: notes/learning/2026-07-16-db-migration-deploy-order.md
+      - run: npm run db:migrate
+
+  deploy-backend:
+    # needs.<job>は「直接needsに書いたジョブ」の出力しか参照できない
+    # (migrate経由でbuild-and-pushの出力に間接的にはたどり着けない)ため両方書く
+    needs: [build-and-push, migrate]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed # v2.1.13
+        with:
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f # v2.2.1
+      # --tag（リビジョンタグ）は使わない。使うとTerraformが継続的に差分を検出する既知の問題がある
+      # (hashicorp/terraform-provider-google#17218)。docs/roadmap.md フェーズ7-4参照
+      - run: |
+          gcloud run deploy mymovie-backend \
+            --image="${{ needs.build-and-push.outputs.image }}" \
+            --region="${{ env.GCP_REGION }}" \
+            --project="${{ env.GCP_PROJECT_ID }}" \
+            --quiet
+
+  deploy-frontend:
+    needs: deploy-backend
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    defaults:
+      run:
+        working-directory: app/frontend
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: app/frontend/.nvmrc
+      - run: npm ci
+      - run: npm run build
+        env:
+          VITE_BACKEND_URL: ${{ env.BACKEND_URL }}
+      - uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed # v2.1.13
+        with:
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SERVICE_ACCOUNT }}
+      - run: npx firebase-tools deploy --only hosting --project "${{ env.GCP_PROJECT_ID }}" --non-interactive
