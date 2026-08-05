@@ -61,10 +61,14 @@ jobs:
           service_account: ${{ env.DEPLOYER_SERVICE_ACCOUNT }}
       - uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f # v2.2.1
       - run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
+      # buildxのデフォルト("docker")ドライバはレジストリへのキャッシュ書き出し
+      # (--cache-to type=registry)を扱えないため、それをサポートする"docker-container"
+      # ドライバのbuilderを明示的に作成して使う（追加のactionは使わず、docker CLI標準の
+      # サブコマンドのみで行う）
+      - run: docker buildx create --use --driver docker-container
       # GitHub Actionsはジョブごとにまっさらな使い捨てVMのため、Dockerのレイヤーキャッシュは
       # 実行のたびに失われる。Artifact Registry自体をキャッシュの置き場所にして、次回以降の
-      # 実行が前回のレイヤーを再利用できるようにする（docker buildがbuildxをデフォルトの
-      # ビルダーとして使うため、追加のactionを導入せず引数だけで実現できる）
+      # 実行が前回のレイヤーを再利用できるようにする
       - id: build
         run: |
           IMAGE="${{ env.ARTIFACT_REGISTRY_REPO }}/backend:${{ github.sha }}"
