@@ -61,6 +61,7 @@ describe('googleAuthRoutes (E2E)', () => {
             identityRepository, userRepository, sessionRepository, auditLogRepository, jwtService,
           ),
           google,
+          frontendUrl: 'http://localhost:5173',
         },
       },
       { logger: false },

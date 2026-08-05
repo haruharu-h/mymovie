@@ -67,6 +67,7 @@ describe('githubAuthRoutes (E2E)', () => {
           ),
           github,
           gitHubApiClient,
+          frontendUrl: 'http://localhost:5173',
         },
       },
       { logger: false },

@@ -8,6 +8,7 @@ export type GitHubAuthRouteDeps = {
   githubLogin: GitHubLogin
   github: GitHub
   gitHubApiClient: GitHubApiClient
+  frontendUrl: string
 }
 
 export async function githubAuthRoutes(app: FastifyInstance, deps: GitHubAuthRouteDeps) {
@@ -66,6 +67,6 @@ export async function githubAuthRoutes(app: FastifyInstance, deps: GitHubAuthRou
       path: '/',
     })
 
-    return reply.redirect('http://localhost:5173/auth/callback')
+    return reply.redirect(`${deps.frontendUrl}/auth/callback`)
   })
 }

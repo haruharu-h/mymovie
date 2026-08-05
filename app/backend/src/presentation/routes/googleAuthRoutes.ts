@@ -6,6 +6,7 @@ import type { GoogleLogin } from '../../application/auth/GoogleLogin.js'
 export type GoogleAuthRouteDeps = {
   googleLogin: GoogleLogin
   google: Google
+  frontendUrl: string
 }
 
 export async function googleAuthRoutes(app: FastifyInstance, deps: GoogleAuthRouteDeps) {
@@ -65,6 +66,6 @@ export async function googleAuthRoutes(app: FastifyInstance, deps: GoogleAuthRou
     })
 
     // フロントエンドにアクセストークンを渡すためリダイレクト
-    return reply.redirect('http://localhost:5173/auth/callback')
+    return reply.redirect(`${deps.frontendUrl}/auth/callback`)
   })
 }

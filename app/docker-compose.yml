@@ -19,6 +19,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      target: dev
     ports:
       - "3000:3000"
     volumes:
@@ -27,6 +28,8 @@ services:
     environment:
       DATABASE_URL: postgres://mymovie:${DB_PASSWORD}@db:5432/mymovie
       NODE_ENV: development
+      BACKEND_URL: http://localhost:3000
+      FRONTEND_URL: http://localhost:5173
       JWT_SECRET: ${JWT_SECRET}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
@@ -110,6 +113,8 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
+    environment:
+      VITE_BACKEND_URL: http://localhost:3000
     depends_on:
       - backend
 

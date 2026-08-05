@@ -67,13 +67,13 @@ export default function SignInPage() {
           </div>
         </div>
         <a
-          href="http://localhost:3000/auth/google"
+          href={`${import.meta.env.VITE_BACKEND_URL}/auth/google`}
           className="flex w-full items-center justify-center gap-2 rounded border py-2 text-sm"
         >
           Googleでログイン
         </a>
         <a
-          href="http://localhost:3000/auth/github"
+          href={`${import.meta.env.VITE_BACKEND_URL}/auth/github`}
           className="flex w-full items-center justify-center gap-2 rounded border py-2 text-sm"
         >
           GitHubでログイン

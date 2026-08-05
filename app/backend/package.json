@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "tsx watch --import ./src/telemetry.ts src/index.ts",
     "test": "node --experimental-vm-modules node_modules/.bin/jest --config jest.config.cjs",

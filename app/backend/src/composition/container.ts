@@ -69,15 +69,31 @@ const jwtService = new JwtService()
 
 // 認証ミドルウェア・OAuthクライアントもここ（唯一の合成ルート）で1回だけ生成する
 const authenticate = makeAuthenticate(jwtService)
+
+// OAuthプロバイダに登録するコールバックURL・ログイン完了後のリダイレクト先は
+// dev/prodで異なるため環境変数化する（本番はCloud Run/Firebase Hostingの実URL）。
+// buildGoogleAuthDeps/buildGitHubAuthDepsという別関数の中でも使うため、
+// if文による絞り込み（関数境界を越えると効かない）ではなくIIFEでstring型を確定させる
+function readRequiredEnv(name: string): string {
+  const value = process.env[name]
+  if (!value) {
+    throw new Error(`${name} is not set`)
+  }
+  return value
+}
+
+const backendUrl = readRequiredEnv('BACKEND_URL')
+const frontendUrl = readRequiredEnv('FRONTEND_URL')
+
 const googleClient = new Google(
   process.env.GOOGLE_CLIENT_ID!,
   process.env.GOOGLE_CLIENT_SECRET!,
-  'http://localhost:3000/auth/google/callback',
+  `${backendUrl}/auth/google/callback`,
 )
 const githubClient = new GitHub(
   process.env.GITHUB_CLIENT_ID!,
   process.env.GITHUB_CLIENT_SECRET!,
-  'http://localhost:3000/auth/github/callback',
+  `${backendUrl}/auth/github/callback`,
 )
 
 // ============================================================
@@ -108,6 +124,7 @@ export function buildGoogleAuthDeps(): GoogleAuthRouteDeps {
       jwtService,
     ),
     google: googleClient,
+    frontendUrl,
   }
 }
 
@@ -122,6 +139,7 @@ export function buildGitHubAuthDeps(): GitHubAuthRouteDeps {
     ),
     github: githubClient,
     gitHubApiClient,
+    frontendUrl,
   }
 }
 
