@@ -10,8 +10,10 @@ import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-http'
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node'
 import { FastifyOtelInstrumentation } from '@fastify/otel'
 
-// エクスポート失敗等のSDK内部エラーはデフォルトでは握りつぶされるため、診断ロガーで可視化する
-diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ERROR)
+// エクスポート失敗等のSDK内部エラーはデフォルトでは握りつぶされるため、診断ロガーで可視化する。
+// ERRORのみだと「キューが溢れてspanを破棄した」のようなWARNレベルの警告を取り逃すため、
+// WARNまで含める（2026-08-07、負荷試験でNew Relic側のspan件数が異常に少ないことが発覚して気づいた）
+diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.WARN)
 
 // New Relicへ送る場合は認証ヘッダー（api-key）が必要。ローカルのotel-collectorは無認証で受け付ける
 const newRelicLicenseKey = process.env.NEW_RELIC_LICENSE_KEY
