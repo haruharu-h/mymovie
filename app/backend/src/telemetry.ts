@@ -13,16 +13,23 @@ import { FastifyOtelInstrumentation } from '@fastify/otel'
 // エクスポート失敗等のSDK内部エラーはデフォルトでは握りつぶされるため、診断ロガーで可視化する
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ERROR)
 
-const otlpEndpoint = process.env.OTEL_EXPORTER_OTLP_ENDPOINT ?? 'http://localhost:4318'
+// New Relicへ送る場合は認証ヘッダー（api-key）が必要。ローカルのotel-collectorは無認証で受け付ける
+const newRelicLicenseKey = process.env.NEW_RELIC_LICENSE_KEY
+const otlpEndpoint = newRelicLicenseKey
+  ? process.env.NEW_RELIC_OTLP_ENDPOINT ?? 'https://otlp.nr-data.net:4318'
+  : process.env.OTEL_EXPORTER_OTLP_ENDPOINT ?? 'http://localhost:4318'
+const otlpHeaders = newRelicLicenseKey ? { 'api-key': newRelicLicenseKey } : undefined
 
 const sdk = new NodeSDK({
   serviceName: 'mymovie-backend',
-  traceExporter: new OTLPTraceExporter({ url: `${otlpEndpoint}/v1/traces` }),
+  traceExporter: new OTLPTraceExporter({ url: `${otlpEndpoint}/v1/traces`, headers: otlpHeaders }),
   metricReader: new PeriodicExportingMetricReader({
-    exporter: new OTLPMetricExporter({ url: `${otlpEndpoint}/v1/metrics` }),
+    exporter: new OTLPMetricExporter({ url: `${otlpEndpoint}/v1/metrics`, headers: otlpHeaders }),
   }),
   logRecordProcessors: [
-    new BatchLogRecordProcessor({ exporter: new OTLPLogExporter({ url: `${otlpEndpoint}/v1/logs` }) }),
+    new BatchLogRecordProcessor({
+      exporter: new OTLPLogExporter({ url: `${otlpEndpoint}/v1/logs`, headers: otlpHeaders }),
+    }),
   ],
   instrumentations: [
     getNodeAutoInstrumentations(),
