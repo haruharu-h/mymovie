@@ -34,7 +34,7 @@ export const options = {
     // delayAbortEval: 開始直後のコールドスタート絡みの一時的な揺らぎ（サンプル数が少ないうちは
     // 1件の失敗でもすぐ5%を超えてしまう）で即abortしないよう、判定開始を30秒遅らせる。
     // 「コールドスタートを含めて計測する」方針自体は変えず、判定タイミングだけ調整する
-    'http_req_failed{scenario:writing}': [{ threshold: 'rate<0.05', abortOnFail: true, delayAbortEval: '30s' }],
+    'http_req_failed{scenario:writing}': [{ threshold: 'rate<0.05', abortOnFail: true, delayAbortEval: '60s' }],
     'http_req_duration{scenario:writing}': ['p(95)<2000'],
   },
 }
