@@ -8,6 +8,9 @@ import { check } from 'k6'
 const BASE_URL = __ENV.BASE_URL || 'http://backend:3000'
 const PASSWORD = 'k6-password-123'
 const MOVIE_ID = '603' // The Matrix。authenticated-flow.jsと共通
+// __VU/__ITERは実行ごとにリセットされるため、これだけだと再実行時に前回と同じメールアドレスに
+// なり409で衝突する。モジュール読み込み時（実行ごとに1回）に決まるランダム値を混ぜて回避する
+const RUN_ID = Math.floor(Math.random() * 1e9)
 
 export const options = {
   scenarios: {
@@ -60,7 +63,7 @@ export function setup() {
 
 export default function () {
   // __VU・__ITERで毎回一意になるメールアドレス。ハイフンはメールアドレスとして無害
-  const email = `k6-write-${__VU}-${__ITER}@test.local`
+  const email = `k6-write-${RUN_ID}-${__VU}-${__ITER}@test.local`
 
   const registerRes = http.post(
     `${BASE_URL}/auth/register`,
