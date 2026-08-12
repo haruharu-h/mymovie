@@ -1,10 +1,12 @@
 import { describe, it, expect, jest, beforeEach } from '@jest/globals'
+import type { Logger } from 'pino'
 import { CreateReview } from './CreateReview.js'
 import { AppError } from '../../domain/shared/AppError.js'
 import type { IReviewRepository } from '../../domain/review/IReviewRepository.js'
 
 describe('CreateReview', () => {
   let reviewRepository: jest.Mocked<IReviewRepository>
+  let logger: jest.Mocked<Logger>
   let createReview: CreateReview
 
   beforeEach(() => {
@@ -16,7 +18,8 @@ describe('CreateReview', () => {
       update: jest.fn<IReviewRepository['update']>(),
       delete: jest.fn<IReviewRepository['delete']>(),
     }
-    createReview = new CreateReview(reviewRepository)
+    logger = { info: jest.fn() } as unknown as jest.Mocked<Logger>
+    createReview = new CreateReview(reviewRepository, logger)
   })
 
   it('有効なスコアなら Review を保存する', async () => {
@@ -27,10 +30,14 @@ describe('CreateReview', () => {
     expect(saved.userId).toBe('user-1')
     expect(saved.movieId).toBe('movie-1')
     expect(saved.score.value).toBe(3.5)
+    expect(logger.info).toHaveBeenCalledWith(
+      expect.objectContaining({ movieId: 'movie-1', creationResult: 'created' }),
+      expect.any(String),
+    )
   })
 
-  it('無効なスコアなら AppError(400) を投げ、保存しない', async () => {
-    expect.assertions(3)
+  it('無効なスコアなら AppError(400) を投げ、保存しない・infoログも出さない', async () => {
+    expect.assertions(4)
     try {
       await createReview.execute('user-1', 'movie-1', 99)
     } catch (e) {
@@ -38,5 +45,19 @@ describe('CreateReview', () => {
       expect((e as AppError).statusCode).toBe(400)
     }
     expect(reviewRepository.save).not.toHaveBeenCalled()
+    expect(logger.info).not.toHaveBeenCalled()
+  })
+
+  it('重複投稿なら保存時の AppError(409) をそのまま投げ直し、infoログは出さない', async () => {
+    reviewRepository.save.mockRejectedValue(new AppError('この映画はすでにレビュー済みです', 409))
+
+    expect.assertions(3)
+    try {
+      await createReview.execute('user-1', 'movie-1', 3.5)
+    } catch (e) {
+      expect(e).toBeInstanceOf(AppError)
+      expect((e as AppError).statusCode).toBe(409)
+    }
+    expect(logger.info).not.toHaveBeenCalled()
   })
 })

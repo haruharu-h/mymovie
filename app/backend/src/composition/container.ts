@@ -13,6 +13,7 @@ import { DrizzleReviewRepository } from '../infrastructure/repository/DrizzleRev
 import { DrizzleFollowRepository } from '../infrastructure/repository/DrizzleFollowRepository.js'
 import { TmdbApiClient } from '../infrastructure/external/TmdbApiClient.js'
 import { GitHubApiClient } from '../infrastructure/external/GitHubApiClient.js'
+import { createLogger } from '../infrastructure/logger.js'
 import { JwtService } from '../application/shared/JwtService.js'
 import { Google, GitHub } from 'arctic'
 import { makeAuthenticate } from '../presentation/middleware/authenticate.js'
@@ -66,6 +67,9 @@ const followRepository = new DrizzleFollowRepository(db)
 const tmdbApiClient = new TmdbApiClient()
 const gitHubApiClient = new GitHubApiClient()
 const jwtService = new JwtService()
+// request.log（Fastifyがリクエスト到着時に生成するもの）は起動時点でまだ存在しないため使えない。
+// movieRepository/tmdbApiClientと同じく、起動時に1回だけ作って全ユースケースで使い回す。
+const logger = createLogger()
 
 // 認証ミドルウェア・OAuthクライアントもここ（唯一の合成ルート）で1回だけ生成する
 const authenticate = makeAuthenticate(jwtService)
@@ -146,7 +150,7 @@ export function buildGitHubAuthDeps(): GitHubAuthRouteDeps {
 export function buildMovieDeps(): MovieRouteDeps {
   return {
     searchMovies: new SearchMovies(tmdbApiClient),
-    registerMovie: new RegisterMovie(movieRepository, tmdbApiClient),
+    registerMovie: new RegisterMovie(movieRepository, tmdbApiClient, logger),
     getMovieDetail: new GetMovieDetail(movieRepository, reviewRepository),
     authenticate,
   }
@@ -155,7 +159,7 @@ export function buildMovieDeps(): MovieRouteDeps {
 export function buildReviewDeps(): ReviewRouteDeps {
   return {
     getReviews: new GetReviews(reviewRepository),
-    createReview: new CreateReview(reviewRepository),
+    createReview: new CreateReview(reviewRepository, logger),
     updateReview: new UpdateReview(reviewRepository),
     deleteReview: new DeleteReview(reviewRepository),
     authenticate,

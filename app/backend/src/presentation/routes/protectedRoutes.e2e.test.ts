@@ -8,11 +8,13 @@ import { UpdateReview } from '../../application/review/UpdateReview.js'
 import { DeleteReview } from '../../application/review/DeleteReview.js'
 import type { IReviewRepository } from '../../domain/review/IReviewRepository.js'
 import type { JwtService } from '../../application/shared/JwtService.js'
+import type { Logger } from 'pino'
 
 // authenticate ミドルウェア（preHandler）が HTTP レベルで正しく効くかを検証する E2E。
 describe('protected routes (E2E) — authenticate', () => {
   let reviewRepository: jest.Mocked<IReviewRepository>
   let jwtService: jest.Mocked<JwtService>
+  let logger: jest.Mocked<Logger>
   let app: FastifyInstance
 
   beforeEach(() => {
@@ -29,12 +31,13 @@ describe('protected routes (E2E) — authenticate', () => {
       verifyAccessToken: jest.fn<JwtService['verifyAccessToken']>(),
       hashToken: jest.fn<JwtService['hashToken']>(),
     } as unknown as jest.Mocked<JwtService>
+    logger = { info: jest.fn() } as unknown as jest.Mocked<Logger>
 
     app = buildApp(
       {
         review: {
           getReviews: new GetReviews(reviewRepository),
-          createReview: new CreateReview(reviewRepository),
+          createReview: new CreateReview(reviewRepository, logger),
           updateReview: new UpdateReview(reviewRepository),
           deleteReview: new DeleteReview(reviewRepository),
           authenticate: makeAuthenticate(jwtService),

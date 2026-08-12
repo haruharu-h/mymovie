@@ -11,10 +11,12 @@ import { Score } from '../../domain/review/Score.js'
 import { Movie } from '../../domain/movie/Movie.js'
 import type { IReviewRepository } from '../../domain/review/IReviewRepository.js'
 import type { JwtService } from '../../application/shared/JwtService.js'
+import type { Logger } from 'pino'
 
 describe('reviewRoutes (E2E)', () => {
   let reviewRepository: jest.Mocked<IReviewRepository>
   let jwtService: jest.Mocked<JwtService>
+  let logger: jest.Mocked<Logger>
   let app: FastifyInstance
 
   const authHeader = { authorization: 'Bearer valid-token' }
@@ -35,12 +37,13 @@ describe('reviewRoutes (E2E)', () => {
       hashToken: jest.fn<JwtService['hashToken']>(),
     } as unknown as jest.Mocked<JwtService>
     jwtService.verifyAccessToken.mockResolvedValue({ userId: authenticatedUserId })
+    logger = { info: jest.fn() } as unknown as jest.Mocked<Logger>
 
     app = buildApp(
       {
         review: {
           getReviews: new GetReviews(reviewRepository),
-          createReview: new CreateReview(reviewRepository),
+          createReview: new CreateReview(reviewRepository, logger),
           updateReview: new UpdateReview(reviewRepository),
           deleteReview: new DeleteReview(reviewRepository),
           authenticate: makeAuthenticate(jwtService),

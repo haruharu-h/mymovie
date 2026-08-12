@@ -2,12 +2,14 @@ import { describe, it, expect, jest, beforeEach } from '@jest/globals'
 import { RegisterMovie } from './RegisterMovie.js'
 import { Movie } from '../../domain/movie/Movie.js'
 import { AppError } from '../../domain/shared/AppError.js'
+import type { Logger } from 'pino'
 import type { IMovieRepository } from '../../domain/movie/IMovieRepository.js'
 import type { TmdbApiClient, TmdbMovie } from '../../infrastructure/external/TmdbApiClient.js'
 
 describe('RegisterMovie', () => {
   let movieRepository: jest.Mocked<IMovieRepository>
   let tmdbApiClient: jest.Mocked<TmdbApiClient>
+  let logger: jest.Mocked<Logger>
   let registerMovie: RegisterMovie
 
   beforeEach(() => {
@@ -19,7 +21,8 @@ describe('RegisterMovie', () => {
       searchMovies: jest.fn<TmdbApiClient['searchMovies']>(),
       findById: jest.fn<TmdbApiClient['findById']>(),
     } as unknown as jest.Mocked<TmdbApiClient>
-    registerMovie = new RegisterMovie(movieRepository, tmdbApiClient)
+    logger = { info: jest.fn() } as unknown as jest.Mocked<Logger>
+    registerMovie = new RegisterMovie(movieRepository, tmdbApiClient, logger)
   })
 
   it('既に登録済みなら何もしない（TMDb も叩かない・保存もしない）', async () => {
@@ -31,13 +34,17 @@ describe('RegisterMovie', () => {
 
     expect(tmdbApiClient.findById).not.toHaveBeenCalled()
     expect(movieRepository.save).not.toHaveBeenCalled()
+    expect(logger.info).toHaveBeenCalledWith(
+      { tmdbId: '1', registrationResult: 'already_registered' },
+      expect.any(String),
+    )
   })
 
-  it('未登録で TMDb にも無ければ AppError(404)、保存しない', async () => {
+  it('未登録で TMDb にも無ければ AppError(404)、保存しない・infoログも出さない', async () => {
     movieRepository.findById.mockResolvedValue(null)
     tmdbApiClient.findById.mockResolvedValue(null)
 
-    expect.assertions(3)
+    expect.assertions(4)
     try {
       await registerMovie.execute('1')
     } catch (e) {
@@ -45,6 +52,8 @@ describe('RegisterMovie', () => {
       expect((e as AppError).statusCode).toBe(404)
     }
     expect(movieRepository.save).not.toHaveBeenCalled()
+    // 404はerrorHandler.tsが既にWARNログを出すため、ここでの重複ログは無い想定
+    expect(logger.info).not.toHaveBeenCalled()
   })
 
   it('未登録で TMDb に在れば Movie を保存する', async () => {
@@ -60,5 +69,9 @@ describe('RegisterMovie', () => {
     expect(saved.id).toBe('1')
     expect(saved.title).toBe('A')
     expect(saved.posterPath).toBe('/p.jpg')
+    expect(logger.info).toHaveBeenCalledWith(
+      { tmdbId: '1', registrationResult: 'newly_registered' },
+      expect.any(String),
+    )
   })
 })

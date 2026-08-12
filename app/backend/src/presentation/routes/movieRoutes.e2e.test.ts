@@ -13,12 +13,14 @@ import type { IMovieRepository } from '../../domain/movie/IMovieRepository.js'
 import type { IReviewRepository } from '../../domain/review/IReviewRepository.js'
 import type { TmdbApiClient, TmdbMovie } from '../../infrastructure/external/TmdbApiClient.js'
 import type { JwtService } from '../../application/shared/JwtService.js'
+import type { Logger } from 'pino'
 
 describe('movieRoutes (E2E)', () => {
   let movieRepository: jest.Mocked<IMovieRepository>
   let reviewRepository: jest.Mocked<IReviewRepository>
   let tmdbApiClient: jest.Mocked<TmdbApiClient>
   let jwtService: jest.Mocked<JwtService>
+  let logger: jest.Mocked<Logger>
   let app: FastifyInstance
 
   const authHeader = { authorization: 'Bearer valid-token' }
@@ -46,12 +48,13 @@ describe('movieRoutes (E2E)', () => {
       hashToken: jest.fn<JwtService['hashToken']>(),
     } as unknown as jest.Mocked<JwtService>
     jwtService.verifyAccessToken.mockResolvedValue({ userId: 'user-1' })
+    logger = { info: jest.fn() } as unknown as jest.Mocked<Logger>
 
     app = buildApp(
       {
         movie: {
           searchMovies: new SearchMovies(tmdbApiClient),
-          registerMovie: new RegisterMovie(movieRepository, tmdbApiClient),
+          registerMovie: new RegisterMovie(movieRepository, tmdbApiClient, logger),
           getMovieDetail: new GetMovieDetail(movieRepository, reviewRepository),
           authenticate: makeAuthenticate(jwtService),
         },

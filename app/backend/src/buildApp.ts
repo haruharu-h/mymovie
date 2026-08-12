@@ -9,6 +9,7 @@ import { reviewRoutes, type ReviewRouteDeps } from './presentation/routes/review
 import { userRoutes, type UserRouteDeps } from './presentation/routes/userRoutes.js'
 import { followRoutes, type FollowRouteDeps } from './presentation/routes/followRoutes.js'
 import { errorHandler, notFoundHandler } from './presentation/errorHandler.js'
+import { loggerOptions } from './infrastructure/logger.js'
 
 // アプリ全体の依存の束。各ルートグループは任意（テストは必要な分だけ渡し、本番は全部渡す）。
 export type AppDeps = {
@@ -23,18 +24,6 @@ export type AppDeps = {
 
 type BuildAppOptions = {
   logger?: boolean
-}
-
-// ログレベル: LOG_LEVELで明示指定できるようにしつつ、未指定時は環境で妥当な既定値に倒す
-// （本番はinfo以上のみ・それ以外はdebugまで見えるようにして開発時の調査をしやすくする）
-const LOG_LEVEL = process.env.LOG_LEVEL ?? (process.env.NODE_ENV === 'production' ? 'info' : 'debug')
-
-const loggerOptions = {
-  level: LOG_LEVEL,
-  // Authorizationヘッダー・Cookie（refresh_token等）をログに残さない
-  redact: ['req.headers.authorization', 'req.headers.cookie', 'res.headers["set-cookie"]'],
-  // 本番はログ集約サービス向けにJSONのまま。それ以外は人が読みやすい形に整形する
-  transport: process.env.NODE_ENV === 'production' ? undefined : { target: 'pino-pretty' },
 }
 
 // アプリを「組み立てて返す」だけの関数。listen は絶対にしない。
