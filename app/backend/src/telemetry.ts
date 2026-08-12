@@ -1,5 +1,7 @@
 // OTel SDKの初期化。--import でエントリポイントより前に読み込ませる必要がある
 // （自動計装はモジュールのrequire/importをフックする方式のため、対象より後から読み込むと計装が効かない）。
+import { register } from 'node:module'
+import { pathToFileURL } from 'node:url'
 import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api'
 import { NodeSDK } from '@opentelemetry/sdk-node'
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
@@ -13,6 +15,13 @@ import { FastifyOtelInstrumentation } from '@fastify/otel'
 // エクスポート失敗等のSDK内部エラーはデフォルトでは握りつぶされるため、診断ロガーで可視化する。
 // ERRORのみだと「キューが溢れてspanを破棄した」のようなWARNレベルの警告を取り逃すため、
 // WARNまで含める（2026-08-07、負荷試験でNew Relic側のspan件数が異常に少ないことが発覚して気づいた）
+// require-in-the-middle（CJSのrequireフック）だけではESM（import文）で読み込まれる
+// パッケージに計装が当たらない。自前でimportしたpinoインスタンス（infrastructure/logger.ts）は
+// これが無いと計装されずNew Relicにログが届かなかった（2026-08-12発見）。Fastify自身は内部で
+// require('pino')という本物のCJS呼び出しをしているため、このフックが無くても動いていた。
+// 詳細: docs/decisions.md「ESM importの計装漏れ」
+register('@opentelemetry/instrumentation/hook.mjs', { parentURL: pathToFileURL('./') })
+
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.WARN)
 
 // New Relicへ送る場合は認証ヘッダー（api-key）が必要。ローカルのotel-collectorは無認証で受け付ける
