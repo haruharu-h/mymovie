@@ -44,12 +44,13 @@ describe('RegisterMovie', () => {
     movieRepository.findById.mockResolvedValue(null)
     tmdbApiClient.findById.mockResolvedValue(null)
 
-    expect.assertions(4)
+    expect.assertions(5)
     try {
       await registerMovie.execute('1')
     } catch (e) {
       expect(e).toBeInstanceOf(AppError)
       expect((e as AppError).statusCode).toBe(404)
+      expect((e as AppError).context).toEqual({ tmdbId: '1' })
     }
     expect(movieRepository.save).not.toHaveBeenCalled()
     // 404はerrorHandler.tsが既にWARNログを出すため、ここでの重複ログは無い想定

@@ -69,13 +69,21 @@ describe('TmdbApiClient', () => {
       expect(result).toEqual({ id: '603', title: 'The Matrix', posterPath: '/x.jpg', releaseDate: '1999-03-31' })
     })
 
-    it('res.ok が false なら null を返す', async () => {
-      jest.spyOn(global, 'fetch').mockResolvedValue({ ok: false } as Response)
+    it('404（本当に存在しない）なら null を返す', async () => {
+      jest.spyOn(global, 'fetch').mockResolvedValue({ ok: false, status: 404 } as Response)
 
       const client = new TmdbApiClient()
       const result = await client.findById('unknown')
 
       expect(result).toBeNull()
+    })
+
+    it('404以外の非成功レスポンス（レート制限・障害等）は Error を投げ、null と区別する', async () => {
+      jest.spyOn(global, 'fetch').mockResolvedValue({ ok: false, status: 429 } as Response)
+
+      const client = new TmdbApiClient()
+
+      await expect(client.findById('603')).rejects.toThrow(Error)
     })
   })
 })

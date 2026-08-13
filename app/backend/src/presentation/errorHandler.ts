@@ -12,7 +12,7 @@ export function errorHandler(error: FastifyError, request: FastifyRequest, reply
   // 想定内（ユーザー起因）：statusCode と message をそのまま返す。
   // システムエラーではないがWARNで残す（不正アクセスの兆候・頻発するバリデーション失敗等を追える状態にする）
   if (error instanceof AppError) {
-    request.log.warn({ statusCode: error.statusCode }, error.message)
+    request.log.warn({ statusCode: error.statusCode, ...error.context }, error.message)
     return reply.status(error.statusCode).send({ message: error.message } satisfies ErrorResponse)
   }
 

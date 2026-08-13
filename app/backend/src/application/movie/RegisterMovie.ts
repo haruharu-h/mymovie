@@ -24,9 +24,10 @@ export class RegisterMovie {
 
     const tmdbMovie = await this.tmdbApiClient.findById(tmdbId)
     if (!tmdbMovie) {
-      // ユーザーへのHTTPレスポンス用の警告ログはerrorHandler.tsが既に出すため、ここでは重複させない
+      // ログ自体はerrorHandler.tsが出す（重複させない）。tmdbIdはAppErrorのcontext経由で
+      // そのログに乗せる。「TMDBに存在しなかった映画」はカタログの穴を把握する材料になる
       setSpanAttribute('movie.registration_result', 'not_found')
-      throw new AppError('映画が見つかりませんでした', 404)
+      throw new AppError('映画が見つかりませんでした', 404, { tmdbId })
     }
 
     const movie = new Movie(

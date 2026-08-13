@@ -30,6 +30,16 @@ describe('errorHandler', () => {
     expect(request.log.warn).toHaveBeenCalledWith({ statusCode: 400 }, '無効なメールアドレスです')
   })
 
+  it('AppError に context があれば、ログにその内容も含める', () => {
+    const reply = buildReply()
+    const request = buildRequest()
+    const error = new AppError('映画が見つかりませんでした', 404, { tmdbId: '999' }) as unknown as FastifyError
+
+    errorHandler(error, request, reply)
+
+    expect(request.log.warn).toHaveBeenCalledWith({ statusCode: 404, tmdbId: '999' }, '映画が見つかりませんでした')
+  })
+
   it('Fastify組み込みの4xxエラーなら その statusCode で返し、WARNでログに残す', () => {
     const reply = buildReply()
     const request = buildRequest()

@@ -40,7 +40,11 @@ export class TmdbApiClient {
   async findById(tmdbId: string): Promise<TmdbMovie | null> {
     const url = `${this.baseUrl}/movie/${tmdbId}?api_key=${this.apiKey}&language=ja-JP`
     const res = await fetch(url)
-    if (!res.ok) return null
+    // 404だけが「本当にTMDBに存在しない」というビジネス上の事実。
+    // それ以外の非成功レスポンス（429のレート制限・500の障害等）はシステムエラーとして
+    // 区別し、呼び出し元が「見つからなかった」と誤って扱わないようにする
+    if (res.status === 404) return null
+    if (!res.ok) throw new Error(`TMDB API returned ${res.status} for movie ${tmdbId}`)
     const m = await res.json() as { id: number; title: string; poster_path: string | null; release_date: string }
 
     return {
