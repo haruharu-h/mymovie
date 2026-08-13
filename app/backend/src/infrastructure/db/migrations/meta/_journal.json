@@ -57,6 +57,13 @@
       "when": 1785974951278,
       "tag": "0007_grant_app_role",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1786627740471,
+      "tag": "0008_grant_looker_studio_readonly",
+      "breakpoints": true
     }
   ]
 }
