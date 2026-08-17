@@ -69,7 +69,8 @@ const gitHubApiClient = new GitHubApiClient()
 const jwtService = new JwtService()
 // request.log（Fastifyがリクエスト到着時に生成するもの）は起動時点でまだ存在しないため使えない。
 // movieRepository/tmdbApiClientと同じく、起動時に1回だけ作って全ユースケースで使い回す。
-const logger = createLogger()
+// buildApp.ts（Fastifyのlogger）にもそのまま渡し、pinoのルートインスタンスを1つに統一する
+export const logger = createLogger()
 
 // 認証ミドルウェア・OAuthクライアントもここ（唯一の合成ルート）で1回だけ生成する
 const authenticate = makeAuthenticate(jwtService)

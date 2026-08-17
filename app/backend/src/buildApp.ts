@@ -1,4 +1,4 @@
-import Fastify, { type FastifyInstance } from 'fastify'
+import Fastify, { type FastifyInstance, type FastifyBaseLogger } from 'fastify'
 import cors from '@fastify/cors'
 import cookie from '@fastify/cookie'
 import { authRoutes, type AuthRouteDeps } from './presentation/routes/authRoutes.js'
@@ -9,7 +9,6 @@ import { reviewRoutes, type ReviewRouteDeps } from './presentation/routes/review
 import { userRoutes, type UserRouteDeps } from './presentation/routes/userRoutes.js'
 import { followRoutes, type FollowRouteDeps } from './presentation/routes/followRoutes.js'
 import { errorHandler, notFoundHandler } from './presentation/errorHandler.js'
-import { loggerOptions } from './infrastructure/logger.js'
 
 // アプリ全体の依存の束。各ルートグループは任意（テストは必要な分だけ渡し、本番は全部渡す）。
 export type AppDeps = {
@@ -22,14 +21,20 @@ export type AppDeps = {
   follow?: FollowRouteDeps
 }
 
+// container.tsで作った既存のpinoインスタンスを渡す（ルートインスタンスを1つに統一するため）。
+// テストでログ出力を抑えたいときだけ false を渡す
 type BuildAppOptions = {
-  logger?: boolean
+  logger: FastifyBaseLogger | false
 }
 
 // アプリを「組み立てて返す」だけの関数。listen は絶対にしない。
 // 本番起動は index.ts、テストは app.inject() で、それぞれこの関数を使う。
-export function buildApp(deps: AppDeps, options: BuildAppOptions = {}): FastifyInstance {
-  const app = Fastify({ logger: (options.logger ?? true) ? loggerOptions : false })
+export function buildApp(deps: AppDeps, options: BuildAppOptions): FastifyInstance {
+  // 既存のpinoインスタンスを渡すには logger ではなく loggerInstance を使う必要がある
+  // （logger は設定オブジェクト/booleanのみ受け付ける。Fastify Reference/Logging.md参照）
+  const app = Fastify(
+    options.logger === false ? { logger: false } : { loggerInstance: options.logger },
+  )
 
   // エラー・404 を1箇所で処理する（レスポンス形式を統一）
   app.setErrorHandler(errorHandler)
