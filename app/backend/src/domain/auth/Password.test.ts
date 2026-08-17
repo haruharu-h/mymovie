@@ -13,6 +13,13 @@ describe('Password', () => {
       expect(await password.verify('password123')).toBe(true)
     })
 
+    it('parallelism:1でハッシュ化する（1vCPU環境でのlibuvスレッドプール独占を避けるため）', async () => {
+      const password = await Password.create('password123')
+      // argon2のハッシュ文字列は $argon2id$v=19$m=...,t=...,p=1$... のように
+      // 使用したパラメータ自体を埋め込む形式になっている
+      expect(password.value).toContain(',p=1$')
+    })
+
     it('8文字ちょうどは通る（境界値）', async () => {
       const password = await Password.create('12345678')
       expect(await password.verify('12345678')).toBe(true)
