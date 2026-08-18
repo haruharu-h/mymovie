@@ -50,7 +50,7 @@ services:
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
-      TMDB_API_KEY: ${TMDB_API_KEY}
+      TMDB_READ_ACCESS_TOKEN: ${TMDB_READ_ACCESS_TOKEN}
     depends_on:
       db:
         condition: service_healthy

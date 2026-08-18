@@ -3,28 +3,28 @@ import { TmdbApiClient } from './TmdbApiClient.js'
 
 describe('TmdbApiClient', () => {
   describe('constructor', () => {
-    const original = process.env.TMDB_API_KEY
+    const original = process.env.TMDB_READ_ACCESS_TOKEN
 
     afterEach(() => {
-      process.env.TMDB_API_KEY = original
+      process.env.TMDB_READ_ACCESS_TOKEN = original
     })
 
-    it('TMDB_API_KEY が未設定なら Error を投げる', () => {
-      delete process.env.TMDB_API_KEY
+    it('TMDB_READ_ACCESS_TOKEN が未設定なら Error を投げる', () => {
+      delete process.env.TMDB_READ_ACCESS_TOKEN
       expect(() => new TmdbApiClient()).toThrow(Error)
     })
   })
 
   describe('searchMovies', () => {
     beforeEach(() => {
-      process.env.TMDB_API_KEY = 'test-key'
+      process.env.TMDB_READ_ACCESS_TOKEN = 'test-token'
     })
 
     afterEach(() => {
       jest.restoreAllMocks()
     })
 
-    it('正しいURLでfetchを呼び、poster_pathがnullなら空文字にフォールバックして整形する', async () => {
+    it('正しいURL・Authorizationヘッダーでfetchを呼び、poster_pathがnullなら空文字にフォールバックして整形する', async () => {
       const fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValue({
         json: async () => ({
           results: [
@@ -38,7 +38,8 @@ describe('TmdbApiClient', () => {
       const result = await client.searchMovies('matrix')
 
       expect(fetchSpy).toHaveBeenCalledWith(
-        'https://api.themoviedb.org/3/search/movie?api_key=test-key&query=matrix&language=ja-JP',
+        'https://api.themoviedb.org/3/search/movie?query=matrix&language=ja-JP',
+        { headers: { Authorization: 'Bearer test-token' } },
       )
       expect(result).toEqual([
         { id: '603', title: 'The Matrix', posterPath: '/x.jpg', releaseDate: '1999-03-31' },
@@ -49,14 +50,14 @@ describe('TmdbApiClient', () => {
 
   describe('findById', () => {
     beforeEach(() => {
-      process.env.TMDB_API_KEY = 'test-key'
+      process.env.TMDB_READ_ACCESS_TOKEN = 'test-token'
     })
 
     afterEach(() => {
       jest.restoreAllMocks()
     })
 
-    it('正しいURLでfetchを呼び、見つかれば整形して返す', async () => {
+    it('正しいURL・Authorizationヘッダーでfetchを呼び、見つかれば整形して返す', async () => {
       const fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValue({
         ok: true,
         json: async () => ({ id: 603, title: 'The Matrix', poster_path: '/x.jpg', release_date: '1999-03-31' }),
@@ -65,7 +66,10 @@ describe('TmdbApiClient', () => {
       const client = new TmdbApiClient()
       const result = await client.findById('603')
 
-      expect(fetchSpy).toHaveBeenCalledWith('https://api.themoviedb.org/3/movie/603?api_key=test-key&language=ja-JP')
+      expect(fetchSpy).toHaveBeenCalledWith(
+        'https://api.themoviedb.org/3/movie/603?language=ja-JP',
+        { headers: { Authorization: 'Bearer test-token' } },
+      )
       expect(result).toEqual({ id: '603', title: 'The Matrix', posterPath: '/x.jpg', releaseDate: '1999-03-31' })
     })
 
