@@ -8,12 +8,15 @@ export class Password {
     if (raw.length < 8) {
       throw new AppError('パスワードは8文字以上にしてください', 400)
     }
-    // parallelismのみデフォルト(4)から下げる。メモリ量・反復回数は変えない。
-    // 1vCPU環境ではparallelism:4は並列化の恩恵が無いままlibuvスレッドプール
-    // （既定サイズ4）を独占し、無関係な処理を巻き込む（docs/decisions.md「フェーズ7-5」
-    // トラックB参照）。同じメモリ量ならparallelismが低い方がGPU等の並列攻撃にも強くなるため、
-    // 強度を落とさずに済む（OWASP Password Storage Cheat Sheet参照）
-    const hash = await argon2.hash(raw, { parallelism: 1 })
+    // OWASP Password Storage Cheat SheetのArgon2id "minimum" プリセット
+    // （m=19456 KiB=19MiB, t=2, p=1）を採用。
+    // parallelism:1は1vCPU環境でlibuvスレッドプール（既定サイズ4）を独占し無関係な
+    // 処理を巻き込む問題への対処（docs/decisions.md「フェーズ7-5」トラックB参照）。
+    // memoryCostを64MiBから19MiBに下げたのは、Cloud Runのメモリ上限your-cloud-run-memory-limitに対し
+    // 64MiB/回だと同時に2件重なっただけでOOMが起きる余地の無さが分かったため
+    // （本番の実測値は非公開）。GPU/ASICでの総当たり攻撃への
+    // 耐性は下がるが、OWASPが正式に許容する範囲内での選択（docs/decisions.md参照）
+    const hash = await argon2.hash(raw, { parallelism: 1, memoryCost: 19456, timeCost: 2 })
     return new Password(hash)
   }
 
