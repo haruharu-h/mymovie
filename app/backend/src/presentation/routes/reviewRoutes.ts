@@ -4,7 +4,6 @@ import type { CreateReview } from '../../application/review/CreateReview.js'
 import type { UpdateReview } from '../../application/review/UpdateReview.js'
 import type { DeleteReview } from '../../application/review/DeleteReview.js'
 import type { SortOrder } from '../../domain/review/IReviewRepository.js'
-import { setSpanAttribute } from '../../infrastructure/tracing.js'
 
 // このルートが必要とするユースケースの束
 export type ReviewRouteDeps = {
@@ -19,9 +18,6 @@ const VALID_SORT_ORDERS: SortOrder[] = ['score', 'releaseDate', 'registeredAt']
 
 export async function reviewRoutes(app: FastifyInstance, deps: ReviewRouteDeps) {
   app.get('/reviews', { preHandler: deps.authenticate }, async (request, reply) => {
-    // コールドスタート判別用（docs/decisions.md「SLI・SLO・SLAの学習とmymovieへの当てはめ」参照）
-    setSpanAttribute('app.process_uptime_seconds', process.uptime())
-
     const { sort, userId } = request.query as { sort?: string; userId?: string }
 
     const sortOrder: SortOrder = VALID_SORT_ORDERS.includes(sort as SortOrder)
