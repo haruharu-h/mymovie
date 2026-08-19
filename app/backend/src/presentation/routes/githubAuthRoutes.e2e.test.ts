@@ -70,7 +70,7 @@ describe('githubAuthRoutes (E2E)', () => {
           frontendUrl: 'http://localhost:5173',
         },
       },
-      { logger: false },
+      { logger: false, forceFlushTelemetry: false },
     )
   })
 

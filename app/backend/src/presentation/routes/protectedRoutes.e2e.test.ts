@@ -43,7 +43,7 @@ describe('protected routes (E2E) — authenticate', () => {
           authenticate: makeAuthenticate(jwtService),
         },
       },
-      { logger: false },
+      { logger: false, forceFlushTelemetry: false },
     )
   })
 

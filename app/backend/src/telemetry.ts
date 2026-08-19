@@ -4,6 +4,7 @@ import { register } from 'node:module'
 import { pathToFileURL } from 'node:url'
 import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api'
 import { NodeSDK } from '@opentelemetry/sdk-node'
+import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-node'
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
 import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics'
 import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http'
@@ -31,17 +32,24 @@ const otlpEndpoint = newRelicLicenseKey
   : process.env.OTEL_EXPORTER_OTLP_ENDPOINT ?? 'http://localhost:4318'
 const otlpHeaders = newRelicLicenseKey ? { 'api-key': newRelicLicenseKey } : undefined
 
+// spanProcessor/metricReader/logRecordProcessorへの参照をNodeSDKの外に保持しておく。
+// NodeSDKはこれらを内部に隠し持つだけで外から取得する手段が無いため、forceFlush()（下記）を
+// 呼べるようにするには自分で組み立てて渡す必要がある
+const spanProcessor = new BatchSpanProcessor(
+  new OTLPTraceExporter({ url: `${otlpEndpoint}/v1/traces`, headers: otlpHeaders }),
+)
+const metricReader = new PeriodicExportingMetricReader({
+  exporter: new OTLPMetricExporter({ url: `${otlpEndpoint}/v1/metrics`, headers: otlpHeaders }),
+})
+const logRecordProcessor = new BatchLogRecordProcessor({
+  exporter: new OTLPLogExporter({ url: `${otlpEndpoint}/v1/logs`, headers: otlpHeaders }),
+})
+
 const sdk = new NodeSDK({
   serviceName: 'mymovie-backend',
-  traceExporter: new OTLPTraceExporter({ url: `${otlpEndpoint}/v1/traces`, headers: otlpHeaders }),
-  metricReader: new PeriodicExportingMetricReader({
-    exporter: new OTLPMetricExporter({ url: `${otlpEndpoint}/v1/metrics`, headers: otlpHeaders }),
-  }),
-  logRecordProcessors: [
-    new BatchLogRecordProcessor({
-      exporter: new OTLPLogExporter({ url: `${otlpEndpoint}/v1/logs`, headers: otlpHeaders }),
-    }),
-  ],
+  spanProcessors: [spanProcessor],
+  metricReaders: [metricReader],
+  logRecordProcessors: [logRecordProcessor],
   instrumentations: [
     getNodeAutoInstrumentations(),
     new FastifyOtelInstrumentation({ registerOnInitialization: true }),
@@ -49,6 +57,19 @@ const sdk = new NodeSDK({
 })
 
 sdk.start()
+
+// Cloud Runの`cpu_idle: true`はレスポンスを返した瞬間からCPUを凍結するため、タイマー駆動の
+// バッチ送信（このままだと数十秒後に発火する）がCPU凍結に巻き込まれてタイムアウト・欠落する
+// ことがある（docs/decisions.md「New RelicのTransactionsページにデータが無かった原因」）。
+// buildApp.tsのonResponseフックからリクエスト完了ごとに呼び、CPUが確実に割り当てられている
+// うちに送信を試みる。1系統が失敗しても他をブロックしないようallSettledで待つ
+export async function forceFlushTelemetry(): Promise<void> {
+  await Promise.allSettled([
+    spanProcessor.forceFlush(),
+    metricReader.forceFlush(),
+    logRecordProcessor.forceFlush(),
+  ])
+}
 
 // プロセス終了時にエクスポーターをflushする（無いとバッファ内のspanが失われる）
 process.on('SIGTERM', () => sdk.shutdown().finally(() => process.exit(0)))

@@ -1,4 +1,5 @@
 import { buildApp } from './buildApp.js'
+import { forceFlushTelemetry } from './telemetry.js'
 import {
   logger,
   buildAuthDeps,
@@ -23,7 +24,7 @@ const app = buildApp(
     user: buildUserDeps(),
     follow: buildFollowDeps(),
   },
-  { logger },
+  { logger, forceFlushTelemetry },
 )
 
 // 起動（listen）はここだけの責務

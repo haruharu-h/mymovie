@@ -62,7 +62,7 @@ describe('auth routes (E2E)', () => {
           logoutUser: new LogoutUser(sessionRepository, auditLogRepository, jwtService),
         },
       },
-      { logger: false },
+      { logger: false, forceFlushTelemetry: false },
     )
   })
 

@@ -39,7 +39,7 @@ describe('followRoutes (E2E)', () => {
           authenticate: makeAuthenticate(jwtService),
         },
       },
-      { logger: false },
+      { logger: false, forceFlushTelemetry: false },
     )
   })
 
