@@ -2,6 +2,7 @@ import type { FastifyInstance, preHandlerHookHandler } from 'fastify'
 import type { SearchMovies } from '../../application/movie/SearchMovies.js'
 import type { RegisterMovie } from '../../application/movie/RegisterMovie.js'
 import type { GetMovieDetail } from '../../application/movie/GetMovieDetail.js'
+import { setSpanAttribute } from '../../infrastructure/tracing.js'
 
 // movie ルートが必要とするユースケースの束
 export type MovieRouteDeps = {
@@ -33,6 +34,10 @@ export async function movieRoutes(app: FastifyInstance, deps: MovieRouteDeps) {
 
   app.get('/movies/:tmdbId', { preHandler: deps.authenticate }, async (request, reply) => {
     const { tmdbId } = request.params as { tmdbId: string }
+
+    // コールドスタート判別用（docs/decisions.md「SLI・SLO・SLAの学習とmymovieへの当てはめ」参照）。
+    // 閾値判定はせず生の秒数を記録し、何秒未満をコールドスタートとみなすかはNRQL側で決める
+    setSpanAttribute('app.process_uptime_seconds', process.uptime())
 
     const result = await deps.getMovieDetail.execute(tmdbId)
     return reply.send({
