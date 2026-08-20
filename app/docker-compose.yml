@@ -28,6 +28,7 @@ services:
     environment:
       DATABASE_URL: postgres://mymovie:${DB_PASSWORD}@db:5432/mymovie
       NODE_ENV: development
+      ENABLE_API_DOCS: "true"
       BACKEND_URL: http://localhost:3000
       FRONTEND_URL: http://localhost:5173
       JWT_SECRET: ${JWT_SECRET}

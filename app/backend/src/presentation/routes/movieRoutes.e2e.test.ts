@@ -118,6 +118,19 @@ describe('movieRoutes (E2E)', () => {
       expect(movieRepository.save).not.toHaveBeenCalled()
     })
 
+    it('tmdbIdが無ければ 400（Zodスキーマによるバリデーション）', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/movies',
+        headers: authHeader,
+        payload: {},
+      })
+
+      expect(res.statusCode).toBe(400)
+      expect(res.json()).toEqual({ message: 'リクエストの形式が正しくありません' })
+      expect(movieRepository.findById).not.toHaveBeenCalled()
+    })
+
     it('TMDBに存在しなければ 404', async () => {
       movieRepository.findById.mockResolvedValue(null)
       tmdbApiClient.findById.mockResolvedValue(null)

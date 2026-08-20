@@ -40,6 +40,9 @@ describe('errorHandler', () => {
     expect(request.log.warn).toHaveBeenCalledWith({ statusCode: 404, tmdbId: '999' }, '映画が見つかりませんでした')
   })
 
+  // Zodバリデーション失敗時の400化は movieRoutes.e2e.test.ts で実際のFastify+Zodの組み合わせとして検証済み
+  // （hasZodFastifySchemaValidationErrorsの判定に使うシンボルがパッケージの内部専用でここから作れないため）
+
   it('Fastify組み込みの4xxエラーなら その statusCode で返し、WARNでログに残す', () => {
     const reply = buildReply()
     const request = buildRequest()

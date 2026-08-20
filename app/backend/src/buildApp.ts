@@ -1,6 +1,9 @@
 import Fastify, { type FastifyInstance, type FastifyBaseLogger } from 'fastify'
 import cors from '@fastify/cors'
 import cookie from '@fastify/cookie'
+import swagger from '@fastify/swagger'
+import swaggerUI from '@fastify/swagger-ui'
+import { serializerCompiler, validatorCompiler, jsonSchemaTransform } from 'fastify-type-provider-zod'
 import { authRoutes, type AuthRouteDeps } from './presentation/routes/authRoutes.js'
 import { googleAuthRoutes, type GoogleAuthRouteDeps } from './presentation/routes/googleAuthRoutes.js'
 import { githubAuthRoutes, type GitHubAuthRouteDeps } from './presentation/routes/githubAuthRoutes.js'
@@ -43,6 +46,23 @@ export function buildApp(deps: AppDeps, options: BuildAppOptions): FastifyInstan
   // エラー・404 を1箇所で処理する（レスポンス形式を統一）
   app.setErrorHandler(errorHandler)
   app.setNotFoundHandler(notFoundHandler)
+
+  // Zodスキーマでリクエストの実行時バリデーション + レスポンスのシリアライズを行う
+  app.setValidatorCompiler(validatorCompiler)
+  app.setSerializerCompiler(serializerCompiler)
+
+  // OpenAPI仕様書の自動生成。設定ミスで本番公開してしまう事故を避けるため、
+  // NODE_ENVによる否定条件（!== 'production'）ではなく明示的なopt-inフラグにする
+  // （未設定・値の変更・別サービスへの流用等、何もしなければ常に無効=fail-closed）
+  if (process.env.ENABLE_API_DOCS === 'true') {
+    app.register(swagger, {
+      openapi: {
+        info: { title: 'mymovie API', version: '1.0.0' },
+      },
+      transform: jsonSchemaTransform,
+    })
+    app.register(swaggerUI, { routePrefix: '/docs' })
+  }
 
   // FRONTEND_URL未設定（テスト等）はローカルのフロントエンドのデフォルト値にフォールバックする
   app.register(cors, {
