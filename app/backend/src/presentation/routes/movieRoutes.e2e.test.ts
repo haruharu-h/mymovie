@@ -74,6 +74,14 @@ describe('movieRoutes (E2E)', () => {
       expect(res.statusCode).toBe(400)
     })
 
+    it('q が重複クエリパラメータ（配列）なら 400（Zodスキーマによるバリデーション）', async () => {
+      const res = await app.inject({ method: 'GET', url: '/movies/search?q=a&q=b', headers: authHeader })
+
+      expect(res.statusCode).toBe(400)
+      expect(res.json()).toEqual({ message: 'リクエストの形式が正しくありません' })
+      expect(tmdbApiClient.searchMovies).not.toHaveBeenCalled()
+    })
+
     it('q があれば検索結果を返す', async () => {
       const tmdbMovie: TmdbMovie = { id: '603', title: 'The Matrix', posterPath: '/x.jpg', releaseDate: '1999-03-31' }
       tmdbApiClient.searchMovies.mockResolvedValue([tmdbMovie])

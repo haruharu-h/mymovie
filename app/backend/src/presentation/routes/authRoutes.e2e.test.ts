@@ -107,6 +107,18 @@ describe('auth routes (E2E)', () => {
     expect(res.cookies.find(c => c.name === 'refresh_token')).toBeUndefined() // Cookieは付かない
   })
 
+  it('POST /auth/register passwordが無ければ 400（Zodスキーマによるバリデーション）', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/auth/register',
+      payload: { email: 'test@example.com' },
+    })
+
+    expect(res.statusCode).toBe(400)
+    expect(res.json()).toEqual({ message: 'リクエストの形式が正しくありません' })
+    expect(identityRepository.findByProviderAndProviderId).not.toHaveBeenCalled()
+  })
+
   it('POST /auth/register 重複: 409・body は { message }', async () => {
     const existing = new Identity('id-1', 'user-1', 'email', 'test@example.com', 'hash', new Date())
     identityRepository.findByProviderAndProviderId.mockResolvedValue(existing)
@@ -138,6 +150,18 @@ describe('auth routes (E2E)', () => {
     expect(res.statusCode).toBe(200)
     expect(res.json()).toEqual({ accessToken: 'access-token-123' })
     expect(res.cookies.find(c => c.name === 'refresh_token')?.httpOnly).toBe(true)
+  })
+
+  it('POST /auth/login emailが無ければ 400（Zodスキーマによるバリデーション）', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/auth/login',
+      payload: { password: 'password123' },
+    })
+
+    expect(res.statusCode).toBe(400)
+    expect(res.json()).toEqual({ message: 'リクエストの形式が正しくありません' })
+    expect(identityRepository.findByProviderAndProviderId).not.toHaveBeenCalled()
   })
 
   it('POST /auth/login パスワード不一致: 401・Cookie は付かない', async () => {

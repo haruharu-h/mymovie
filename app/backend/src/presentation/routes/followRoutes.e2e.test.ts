@@ -64,6 +64,19 @@ describe('followRoutes (E2E)', () => {
       expect(savedFollow.followeeId).toBe('user-2')
     })
 
+    it('followeeIdが無ければ 400（Zodスキーマによるバリデーション）', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/follows',
+        headers: authHeader,
+        payload: {},
+      })
+
+      expect(res.statusCode).toBe(400)
+      expect(res.json()).toEqual({ message: 'リクエストの形式が正しくありません' })
+      expect(followRepository.save).not.toHaveBeenCalled()
+    })
+
     it('自分自身をフォローしようとすると 400', async () => {
       const res = await app.inject({
         method: 'POST',

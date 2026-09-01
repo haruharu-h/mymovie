@@ -83,6 +83,14 @@ describe('userRoutes (E2E)', () => {
       expect(res.statusCode).toBe(400)
     })
 
+    it('q が重複クエリパラメータ（配列）なら 400（Zodスキーマによるバリデーション）', async () => {
+      const res = await app.inject({ method: 'GET', url: '/users/search?q=a&q=b', headers: authHeader })
+
+      expect(res.statusCode).toBe(400)
+      expect(res.json()).toEqual({ message: 'リクエストの形式が正しくありません' })
+      expect(userRepository.findByName).not.toHaveBeenCalled()
+    })
+
     it('q があれば email・snsUrl を含まない形で返す', async () => {
       const user = new User('user-2', 'Bob', 'bob@example.com', '2000-01-01', 'https://x.com/bob', new Date())
       userRepository.findByName.mockResolvedValue([user])

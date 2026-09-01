@@ -112,6 +112,19 @@ describe('reviewRoutes (E2E)', () => {
       expect(savedReview.movieId).toBe('603')
       expect(savedReview.score.value).toBe(4.5)
     })
+
+    it('scoreが無ければ 400（Zodスキーマによるバリデーション）', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/reviews',
+        headers: authHeader,
+        payload: { movieId: '603' },
+      })
+
+      expect(res.statusCode).toBe(400)
+      expect(res.json()).toEqual({ message: 'リクエストの形式が正しくありません' })
+      expect(reviewRepository.save).not.toHaveBeenCalled()
+    })
   })
 
   describe('PATCH /reviews/:reviewId', () => {
@@ -143,6 +156,19 @@ describe('reviewRoutes (E2E)', () => {
 
       expect(res.statusCode).toBe(404)
       expect(res.json()).toEqual({ message: 'レビューが見つかりません' })
+    })
+
+    it('scoreが無ければ 400（Zodスキーマによるバリデーション）', async () => {
+      const res = await app.inject({
+        method: 'PATCH',
+        url: '/reviews/review-1',
+        headers: authHeader,
+        payload: {},
+      })
+
+      expect(res.statusCode).toBe(400)
+      expect(res.json()).toEqual({ message: 'リクエストの形式が正しくありません' })
+      expect(reviewRepository.findById).not.toHaveBeenCalled()
     })
   })
 
