@@ -20,6 +20,7 @@ export const users = pgTable('users', {
   email: text('email'),
   birthdate: date('birthdate'),
   snsUrl: text('sns_url'),
+  avatarUrl: text('avatar_url'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
 })
 

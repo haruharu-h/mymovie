@@ -65,7 +65,7 @@ export class DrizzleReviewRepository implements IReviewRepository {
 
     return rows.map(row => ({
       review: new Review(row.reviews.id, row.reviews.userId, row.reviews.movieId, Score.reconstruct(row.reviews.score), row.reviews.registeredAt),
-      user: new User(row.users.id, row.users.name, row.users.email ?? null, row.users.birthdate ?? null, row.users.snsUrl ?? null, row.users.createdAt),
+      user: new User(row.users.id, row.users.name, row.users.email ?? null, row.users.birthdate ?? null, row.users.snsUrl ?? null, row.users.avatarUrl ?? null, row.users.createdAt),
     }))
   }
 

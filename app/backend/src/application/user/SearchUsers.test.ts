@@ -14,6 +14,7 @@ describe('SearchUsers', () => {
       findByEmail: jest.fn<IUserRepository['findByEmail']>(),
       findByName: jest.fn<IUserRepository['findByName']>(),
       updateProfile: jest.fn<IUserRepository['updateProfile']>(),
+      updateAvatarUrl: jest.fn<IUserRepository['updateAvatarUrl']>(),
     }
     searchUsers = new SearchUsers(userRepository)
   })

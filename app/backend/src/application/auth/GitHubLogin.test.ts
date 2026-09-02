@@ -29,6 +29,7 @@ describe('GitHubLogin（アカウント統合 + メールnullの分岐）', () =
       findByEmail: jest.fn<IUserRepository['findByEmail']>(),
       findByName: jest.fn<IUserRepository['findByName']>(),
       updateProfile: jest.fn<IUserRepository['updateProfile']>(),
+      updateAvatarUrl: jest.fn<IUserRepository['updateAvatarUrl']>(),
     }
     sessionRepository = {
       save: jest.fn<ISessionRepository['save']>(),
@@ -64,7 +65,7 @@ describe('GitHubLogin（アカウント統合 + メールnullの分岐）', () =
   it('② 同じメールの既存ユーザーあり → 統合（User は作らない）', async () => {
     identityRepository.findByProviderAndProviderId.mockResolvedValue(null)
     userRepository.findByEmail.mockResolvedValue(
-      new User('existing-user', 'Alice', 'a@example.com', null, null, new Date()),
+      new User('existing-user', 'Alice', 'a@example.com', null, null, null, new Date()),
     )
 
     await githubLogin.execute('gh-1', 'Alice', 'a@example.com', ctx)

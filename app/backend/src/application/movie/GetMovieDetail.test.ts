@@ -10,7 +10,7 @@ import type { IReviewRepository, ReviewWithUser } from '../../domain/review/IRev
 
 const buildReviewWithUser = (score: number): ReviewWithUser => ({
   review: new Review('r', 'u', 'movie-1', Score.reconstruct(score), new Date()),
-  user: new User('u', 'Alice', null, null, null, new Date()),
+  user: new User('u', 'Alice', null, null, null, null, new Date()),
 })
 
 describe('GetMovieDetail', () => {

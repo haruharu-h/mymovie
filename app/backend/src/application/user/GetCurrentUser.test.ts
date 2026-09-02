@@ -10,6 +10,7 @@ const buildUserRepository = (): jest.Mocked<IUserRepository> => ({
   findByEmail: jest.fn<IUserRepository['findByEmail']>(),
   findByName: jest.fn<IUserRepository['findByName']>(),
   updateProfile: jest.fn<IUserRepository['updateProfile']>(),
+  updateAvatarUrl: jest.fn<IUserRepository['updateAvatarUrl']>(),
 })
 
 describe('GetCurrentUser', () => {
@@ -22,7 +23,7 @@ describe('GetCurrentUser', () => {
   })
 
   it('ユーザーが見つかれば返す', async () => {
-    const user = new User('user-1', 'Alice', 'a@example.com', null, null, new Date())
+    const user = new User('user-1', 'Alice', 'a@example.com', null, null, null, new Date())
     userRepository.findById.mockResolvedValue(user)
 
     const result = await getCurrentUser.execute('user-1')

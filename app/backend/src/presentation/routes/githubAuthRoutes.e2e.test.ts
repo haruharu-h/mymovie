@@ -35,6 +35,7 @@ describe('githubAuthRoutes (E2E)', () => {
       findByEmail: jest.fn<IUserRepository['findByEmail']>(),
       findByName: jest.fn<IUserRepository['findByName']>(),
       updateProfile: jest.fn<IUserRepository['updateProfile']>(),
+      updateAvatarUrl: jest.fn<IUserRepository['updateAvatarUrl']>(),
     }
     sessionRepository = {
       save: jest.fn<ISessionRepository['save']>(),

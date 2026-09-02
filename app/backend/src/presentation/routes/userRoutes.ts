@@ -4,10 +4,18 @@ import { z } from 'zod'
 import type { SearchUsers } from '../../application/user/SearchUsers.js'
 import type { GetCurrentUser } from '../../application/user/GetCurrentUser.js'
 import type { UpdateUserProfile } from '../../application/user/UpdateUserProfile.js'
+import type { RequestAvatarUploadUrl } from '../../application/user/RequestAvatarUploadUrl.js'
+import type { UpdateUserAvatar } from '../../application/user/UpdateUserAvatar.js'
 
 // qの型チェックのみを担う（未指定時の具体的な日本語メッセージはルート側の分岐に残す）
 const SearchUsersQuerySchema = z.object({
   q: z.string().optional(),
+})
+
+// contentTypeの型・必須チェックのみを担う（許可リストとの照合はビジネスルールのため
+// RequestAvatarUploadUrl側で行う）
+const RequestAvatarUploadUrlBodySchema = z.object({
+  contentType: z.string().min(1),
 })
 
 // name/birthdate/snsUrlの型チェックのみを担う（未指定・空白のみの場合の具体的な日本語メッセージは
@@ -23,6 +31,8 @@ export type UserRouteDeps = {
   getCurrentUser: GetCurrentUser
   searchUsers: SearchUsers
   updateUserProfile: UpdateUserProfile
+  requestAvatarUploadUrl: RequestAvatarUploadUrl
+  updateUserAvatar: UpdateUserAvatar
   authenticate: preHandlerHookHandler
 }
 
@@ -35,6 +45,7 @@ export async function userRoutes(app: FastifyInstance, deps: UserRouteDeps) {
       email: user.email,
       birthdate: user.birthdate,
       snsUrl: user.snsUrl,
+      avatarUrl: user.avatarUrl,
     })
   })
 
@@ -80,4 +91,22 @@ export async function userRoutes(app: FastifyInstance, deps: UserRouteDeps) {
       return reply.status(204).send()
     },
   )
+
+  app.withTypeProvider<ZodTypeProvider>().post(
+    '/users/me/avatar-upload-url',
+    { preHandler: deps.authenticate, schema: { body: RequestAvatarUploadUrlBodySchema } },
+    async (request, reply) => {
+      const { contentType } = request.body
+
+      const policy = await deps.requestAvatarUploadUrl.execute(request.userId, contentType)
+
+      return reply.send(policy)
+    },
+  )
+
+  app.patch('/users/me/avatar', { preHandler: deps.authenticate }, async (request, reply) => {
+    await deps.updateUserAvatar.execute(request.userId)
+
+    return reply.status(204).send()
+  })
 }

@@ -12,4 +12,5 @@ export interface IUserRepository {
   findByEmail(email: string): Promise<User | null>
   findByName(name: string): Promise<User[]>
   updateProfile(userId: string, data: UpdateProfileData): Promise<void>
+  updateAvatarUrl(userId: string, avatarUrl: string): Promise<void>
 }

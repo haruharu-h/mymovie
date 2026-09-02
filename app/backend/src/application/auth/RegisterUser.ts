@@ -45,7 +45,7 @@ export class RegisterUser {
 
       // 3. User を作って保存
       const userId = randomUUID()
-      await this.userRepository.save(new User(userId, email.value, email.value, null, null, new Date()))
+      await this.userRepository.save(new User(userId, email.value, email.value, null, null, null, new Date()))
 
       // 4. Identity を作って保存
       const identity = new Identity(

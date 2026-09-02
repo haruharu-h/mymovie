@@ -23,7 +23,7 @@ export class DrizzleUserRepository implements IUserRepository {
 
     if (!row) return null
 
-    return new User(row.id, row.name, row.email ?? null, row.birthdate ?? null, row.snsUrl ?? null, row.createdAt)
+    return new User(row.id, row.name, row.email ?? null, row.birthdate ?? null, row.snsUrl ?? null, row.avatarUrl ?? null, row.createdAt)
   }
 
   async findByEmail(email: string): Promise<User | null> {
@@ -33,7 +33,7 @@ export class DrizzleUserRepository implements IUserRepository {
 
     if (!row) return null
 
-    return new User(row.id, row.name, row.email ?? null, row.birthdate ?? null, row.snsUrl ?? null, row.createdAt)
+    return new User(row.id, row.name, row.email ?? null, row.birthdate ?? null, row.snsUrl ?? null, row.avatarUrl ?? null, row.createdAt)
   }
 
   async findByName(name: string): Promise<User[]> {
@@ -41,12 +41,18 @@ export class DrizzleUserRepository implements IUserRepository {
       where: ilike(users.name, `%${name}%`),
     })
 
-    return rows.map(row => new User(row.id, row.name, row.email ?? null, row.birthdate ?? null, row.snsUrl ?? null, row.createdAt))
+    return rows.map(row => new User(row.id, row.name, row.email ?? null, row.birthdate ?? null, row.snsUrl ?? null, row.avatarUrl ?? null, row.createdAt))
   }
 
   async updateProfile(userId: string, data: UpdateProfileData): Promise<void> {
     await this.db.update(users)
       .set({ name: data.name, birthdate: data.birthdate, snsUrl: data.snsUrl })
+      .where(eq(users.id, userId))
+  }
+
+  async updateAvatarUrl(userId: string, avatarUrl: string): Promise<void> {
+    await this.db.update(users)
+      .set({ avatarUrl })
       .where(eq(users.id, userId))
   }
 }

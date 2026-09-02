@@ -5,6 +5,7 @@ export class User {
     readonly email: string | null,
     readonly birthdate: string | null,
     readonly snsUrl: string | null,
+    readonly avatarUrl: string | null,
     readonly createdAt: Date,
   ) {}
 }

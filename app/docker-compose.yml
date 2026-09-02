@@ -25,6 +25,9 @@ services:
     volumes:
       - ./backend:/app
       - /app/node_modules
+      # ローカル開発でGcsAvatarSignerが実際のGCSに署名付きPOST policyを発行できるように、
+      # ホストのADC（`gcloud auth application-default login`で生成）を読み取り専用でマウントする
+      - ~/.config/gcloud/application_default_credentials.json:/gcloud/application_default_credentials.json:ro
     environment:
       DATABASE_URL: postgres://mymovie:${DB_PASSWORD}@db:5432/mymovie
       NODE_ENV: development
@@ -37,6 +40,8 @@ services:
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
       TMDB_READ_ACCESS_TOKEN: ${TMDB_READ_ACCESS_TOKEN}
+      AVATAR_BUCKET_NAME: ${AVATAR_BUCKET_NAME}
+      GOOGLE_APPLICATION_CREDENTIALS: /gcloud/application_default_credentials.json
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
     depends_on:
       db:

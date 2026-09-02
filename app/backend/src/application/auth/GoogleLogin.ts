@@ -50,7 +50,7 @@ export class GoogleLogin {
       } else {
         // 完全新規 → ユーザー作成
         userId = randomUUID()
-        const user = new User(userId, name, email, null, null, new Date())
+        const user = new User(userId, name, email, null, null, null, new Date())
         await this.userRepository.save(user)
       }
 

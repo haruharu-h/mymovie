@@ -22,7 +22,7 @@ describe('DrizzleUserRepository', () => {
 
   describe('save / findById', () => {
     it('保存したユーザーをIDで取得できる', async () => {
-      const user = new User('11111111-1111-1111-1111-111111111111', '山田太郎', 'yamada@example.com', null, null, new Date())
+      const user = new User('11111111-1111-1111-1111-111111111111', '山田太郎', 'yamada@example.com', null, null, null, new Date())
 
       await repository.save(user)
       const found = await repository.findById(user.id)

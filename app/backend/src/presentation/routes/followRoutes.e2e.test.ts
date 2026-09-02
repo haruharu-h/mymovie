@@ -108,7 +108,7 @@ describe('followRoutes (E2E)', () => {
 
   describe('GET /follows', () => {
     it('email・snsUrl を含まない形でフォロー中ユーザーを返す', async () => {
-      const followee = new User('user-2', 'Bob', 'bob@example.com', '2000-01-01', 'https://x.com/bob', new Date())
+      const followee = new User('user-2', 'Bob', 'bob@example.com', '2000-01-01', 'https://x.com/bob', null, new Date())
       followRepository.findFolloweesByFollowerId.mockResolvedValue([followee])
 
       const res = await app.inject({ method: 'GET', url: '/follows', headers: authHeader })

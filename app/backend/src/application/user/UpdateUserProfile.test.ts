@@ -13,6 +13,7 @@ describe('UpdateUserProfile', () => {
       findByEmail: jest.fn<IUserRepository['findByEmail']>(),
       findByName: jest.fn<IUserRepository['findByName']>(),
       updateProfile: jest.fn<IUserRepository['updateProfile']>(),
+      updateAvatarUrl: jest.fn<IUserRepository['updateAvatarUrl']>(),
     }
     updateUserProfile = new UpdateUserProfile(userRepository)
   })

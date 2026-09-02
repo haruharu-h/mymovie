@@ -13,6 +13,7 @@ import { DrizzleReviewRepository } from '../infrastructure/repository/DrizzleRev
 import { DrizzleFollowRepository } from '../infrastructure/repository/DrizzleFollowRepository.js'
 import { TmdbApiClient } from '../infrastructure/external/TmdbApiClient.js'
 import { GitHubApiClient } from '../infrastructure/external/GitHubApiClient.js'
+import { GcsAvatarSigner } from '../infrastructure/external/GcsAvatarSigner.js'
 import { createLogger } from '../infrastructure/logger.js'
 import { JwtService } from '../application/shared/JwtService.js'
 import { Google, GitHub } from 'arctic'
@@ -35,6 +36,8 @@ import { DeleteReview } from '../application/review/DeleteReview.js'
 import { GetCurrentUser } from '../application/user/GetCurrentUser.js'
 import { SearchUsers } from '../application/user/SearchUsers.js'
 import { UpdateUserProfile } from '../application/user/UpdateUserProfile.js'
+import { RequestAvatarUploadUrl } from '../application/user/RequestAvatarUploadUrl.js'
+import { UpdateUserAvatar } from '../application/user/UpdateUserAvatar.js'
 import { FollowUser } from '../application/follow/FollowUser.js'
 import { UnfollowUser } from '../application/follow/UnfollowUser.js'
 import { GetFollowees } from '../application/follow/GetFollowees.js'
@@ -66,6 +69,7 @@ const reviewRepository = new DrizzleReviewRepository(db)
 const followRepository = new DrizzleFollowRepository(db)
 const tmdbApiClient = new TmdbApiClient()
 const gitHubApiClient = new GitHubApiClient()
+const gcsAvatarSigner = new GcsAvatarSigner()
 const jwtService = new JwtService()
 // request.log（Fastifyがリクエスト到着時に生成するもの）は起動時点でまだ存在しないため使えない。
 // movieRepository/tmdbApiClientと同じく、起動時に1回だけ作って全ユースケースで使い回す。
@@ -172,6 +176,8 @@ export function buildUserDeps(): UserRouteDeps {
     getCurrentUser: new GetCurrentUser(userRepository),
     searchUsers: new SearchUsers(userRepository),
     updateUserProfile: new UpdateUserProfile(userRepository),
+    requestAvatarUploadUrl: new RequestAvatarUploadUrl(gcsAvatarSigner),
+    updateUserAvatar: new UpdateUserAvatar(userRepository, gcsAvatarSigner),
     authenticate,
   }
 }

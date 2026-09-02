@@ -4,6 +4,12 @@ export type CurrentUser = {
   email: string | null
   birthdate: string | null
   snsUrl: string | null
+  avatarUrl: string | null
+}
+
+export type AvatarUploadPolicy = {
+  uploadUrl: string
+  fields: Record<string, string>
 }
 
 export type UserSummary = {

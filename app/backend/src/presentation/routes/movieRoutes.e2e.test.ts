@@ -159,7 +159,7 @@ describe('movieRoutes (E2E)', () => {
     it('見つかれば movie/averageScore/reviews の形で 200', async () => {
       const movie = new Movie('603', 'The Matrix', '/x.jpg', '1999-03-31', new Date())
       const review = new Review('review-1', 'user-1', '603', Score.create(4.5), new Date('2026-01-01'))
-      const user = new User('user-1', 'Alice', null, null, null, new Date())
+      const user = new User('user-1', 'Alice', null, null, null, null, new Date())
       movieRepository.findById.mockResolvedValue(movie)
       reviewRepository.findAllByMovieId.mockResolvedValue([{ review, user }])
 

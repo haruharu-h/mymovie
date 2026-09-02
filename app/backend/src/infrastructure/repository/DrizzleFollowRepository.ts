@@ -31,6 +31,6 @@ export class DrizzleFollowRepository implements IFollowRepository {
       .innerJoin(users, eq(follows.followeeId, users.id))
       .where(eq(follows.followerId, followerId))
 
-    return rows.map(row => new User(row.user.id, row.user.name, row.user.email ?? null, row.user.birthdate ?? null, row.user.snsUrl ?? null, row.user.createdAt))
+    return rows.map(row => new User(row.user.id, row.user.name, row.user.email ?? null, row.user.birthdate ?? null, row.user.snsUrl ?? null, row.user.avatarUrl ?? null, row.user.createdAt))
   }
 }
