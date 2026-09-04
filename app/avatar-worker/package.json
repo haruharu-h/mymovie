@@ -1,0 +1,23 @@
+{
+  "name": "avatar-worker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "npx functions-framework --target=processAvatar --signature-type=cloudevent",
+    "test": "node --experimental-vm-modules node_modules/.bin/jest --config jest.config.cjs"
+  },
+  "dependencies": {
+    "@google-cloud/functions-framework": "^5.0.5",
+    "@google-cloud/storage": "^8.0.1",
+    "sharp": "^0.35.4"
+  },
+  "devDependencies": {
+    "@types/node": "^26.0.1",
+    "jest": "^30.4.2",
+    "ts-jest": "^29.4.11",
+    "typescript": "^6.0.3"
+  }
+}
