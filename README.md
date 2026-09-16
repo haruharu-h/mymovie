@@ -41,6 +41,18 @@ Federation等）はTerraformで管理しているが、実際のGCPプロジェ�
 - **インフラ**: GCP（Cloud Run, Firebase Hosting, Secret Manager, Artifact Registry, Cloud Run Functions）、Terraform、GitHub Actions（Workload Identity Federationで長期キー無しのCI/CD）
 - **テスト**: Jest（ユニット・統合）、Playwright（E2E）、k6（負荷試験）
 
+## 開発環境のセットアップ
+
+clone後、最初に以下を実行する（実際のアカウント識別子・個人情報の誤コミットを防ぐ
+pre-commitフックを有効化する）。
+
+```bash
+git config core.hooksPath .githooks
+```
+
+`gitleaks`（`brew install gitleaks`）がインストールされていれば、コミット前に自動で
+チェックされる。ルールの定義は`.gitleaks.toml`。
+
 ## ローカルでの起動
 
 Dockerが起動していれば、以下でフロントエンド・バックエンド・DB・オブザーバビリティスタックを

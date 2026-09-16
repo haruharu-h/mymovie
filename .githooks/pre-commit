@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# 実際のGCPアカウント識別子・個人情報がコミットに混入するのを防ぐpre-commitフック。
+# ルールの正本は .gitleaks.toml。有効化: git config core.hooksPath .githooks
+set -euo pipefail
+
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "⚠️  gitleaksが見つかりません（brew install gitleaks）。このコミットはチェック未実施のまま通過します。" >&2
+  echo "   CI（.github/workflows/secret-scan.yml）で最終的に検知されます。" >&2
+  exit 0
+fi
+
+repo_root="$(git rev-parse --show-toplevel)"
+
+if ! gitleaks protect --staged --source "$repo_root" --config "$repo_root/.gitleaks.toml" --no-banner; then
+  echo "" >&2
+  echo "❌ コミットをブロックしました。上記の実アカウント識別子・個人情報をステージから外すか、" >&2
+  echo "   プレースホルダーに置き換えてください。" >&2
+  echo "   誤検知の場合は .gitleaks.toml の [allowlist] に追記して調整してください。" >&2
+  exit 1
+fi

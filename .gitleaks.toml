@@ -1,0 +1,79 @@
+title = "mymovie custom gitleaks rules"
+
+# このプロジェクト固有の「実アカウント識別子」の正本（single source of truth）。
+# 2026-09-16の監査で繰り返し見落としが発生したため、二度と混入させないよう
+# 機械的に強制するためのルールセット。新しい実アカウント識別子（新GCPプロジェクト・
+# 新ドメイン・新しい個人メール等）を扱うときは、他のどの作業より先にここへ追記すること。
+#
+# 実行方法:
+#   - ローカルのpre-commitフック（.githooks/pre-commit）が自動実行
+#   - GitHub Actions（.github/workflows/secret-scan.yml）がpush/PRごとに自動実行
+#
+# 手動確認: gitleaks detect --source . --config .gitleaks.toml --log-opts="--all" -v
+
+[extend]
+# gitleaksの標準ルール（AWSキー・秘密鍵等の汎用パターン）に、下記のプロジェクト固有
+# ルールを追加する（標準ルールを置き換えるのではなく拡張する）
+useDefault = true
+
+[[rules]]
+id = "mymovie-real-gcp-project-id"
+description = "実際のGCPプロジェクトID（your-project-id）。infra/配下（git管理外）でのみ使用可"
+regex = '''your-project-id'''
+tags = ["mymovie", "gcp"]
+
+[[rules]]
+id = "mymovie-real-gcp-project-number"
+description = "実際のGCPプロジェクト番号（your-project-number）"
+regex = '''your-project-number'''
+tags = ["mymovie", "gcp"]
+
+[[rules]]
+id = "mymovie-work-email-domain"
+description = "勤務先のメールドメイン"
+regex = '''your-work-domain\.example'''
+tags = ["mymovie", "pii"]
+
+[[rules]]
+id = "mymovie-docomo-email-domain"
+description = "個人のdocomoメールドメイン"
+regex = '''your-personal-domain\.example'''
+tags = ["mymovie", "pii"]
+
+[[rules]]
+id = "mymovie-personal-gmail"
+description = "個人のGmailアドレス"
+regex = '''your.name@gmail\.com'''
+tags = ["mymovie", "pii"]
+
+[[rules]]
+id = "mymovie-real-name"
+description = "実名（会社メール・GitHubの旧ハンドル等に由来）"
+regex = '''your[._]name'''
+tags = ["mymovie", "pii"]
+
+[[rules]]
+id = "mymovie-real-backend-url"
+description = "実際の本番Cloud Run URL（稼働中のサービス）"
+regex = '''your-backend-host\.a\.run\.app'''
+tags = ["mymovie", "infra"]
+
+[[rules]]
+id = "mymovie-real-frontend-domain"
+description = "実際の本番フロントエンドドメイン"
+regex = '''your-frontend-domain\.example'''
+tags = ["mymovie", "infra"]
+
+[[rules]]
+id = "mymovie-real-service-account-prefix"
+description = "実際のサービスアカウント名の接頭辞"
+regex = '''(your-avatar-worker(-build)?|your-deployer)@'''
+tags = ["mymovie", "gcp"]
+
+# 誤検知の除外はここに追記する（デフォルトでは何も除外しない）
+[allowlist]
+description = "既知の誤検知"
+paths = [
+  '''.*/node_modules/.*''',
+  '''.*package-lock\.json$''',
+]
