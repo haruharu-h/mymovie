@@ -54,8 +54,6 @@ jobs:
     permissions:
       contents: read
       id-token: write # OIDCトークンを要求するために必須
-    outputs:
-      image: ${{ steps.build.outputs.image }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed # v2.1.13
@@ -75,6 +73,13 @@ jobs:
       # 実行が前回のレイヤーを再利用できるようにする。docker-containerドライバはビルド結果を
       # ローカルのDocker daemonに自動ロードしないため、`docker build`+`docker push`を分けず
       # `docker buildx build --push`で直接レジストリに送る
+      # イメージ参照(ARTIFACT_REGISTRY_REPO+github.sha)はGITHUB_OUTPUT/outputs経由で
+      # 次のジョブに渡さない。ARTIFACT_REGISTRY_REPOがシークレットのため、それを含む値を
+      # ジョブの出力(steps.*.outputs/jobs.*.outputs)に書くと、GitHub Actionsのシークレット
+      # マスキングが出力の値自体を壊してしまう(ログ上の***表示だけでなく、
+      # needs.<job>.outputs側で読んだ値が空になる)。deploy-backend側でも同じ
+      # env.ARTIFACT_REGISTRY_REPO + github.shaから同じイメージ参照を組み立てることで、
+      # 出力を経由させずに済ませている
       - id: build
         run: |
           IMAGE="${{ env.ARTIFACT_REGISTRY_REPO }}/backend:${{ github.sha }}"
@@ -83,7 +88,6 @@ jobs:
             --cache-from "type=registry,ref=$CACHE_IMAGE" \
             --cache-to "type=registry,ref=$CACHE_IMAGE,mode=max" \
             -t "$IMAGE" --push backend
-          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
 
   migrate:
     needs: build-and-push
@@ -131,7 +135,7 @@ jobs:
       # (hashicorp/terraform-provider-google#17218)。docs/roadmap.md フェーズ7-4参照
       - run: |
           gcloud run deploy mymovie-backend \
-            --image="${{ needs.build-and-push.outputs.image }}" \
+            --image="${{ env.ARTIFACT_REGISTRY_REPO }}/backend:${{ github.sha }}" \
             --region="${{ env.GCP_REGION }}" \
             --project="${{ env.GCP_PROJECT_ID }}" \
             --quiet
