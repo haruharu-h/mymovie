@@ -59,9 +59,9 @@ gcloud functions deploy processAvatar \
   --entry-point=processAvatar \
   --trigger-bucket=<project-id>-avatars \
   --trigger-location=us-central1 \
-  --service-account=runtime-service-account@<project-id>.iam.gserviceaccount.com \
-  --trigger-service-account=runtime-service-account@<project-id>.iam.gserviceaccount.com \
-  --build-service-account=projects/<project-id>/serviceAccounts/build-service-account@<project-id>.iam.gserviceaccount.com \
+  --service-account=<runtime-service-account>@<project-id>.iam.gserviceaccount.com \
+  --trigger-service-account=<runtime-service-account>@<project-id>.iam.gserviceaccount.com \
+  --build-service-account=projects/<project-id>/serviceAccounts/<build-service-account>@<project-id>.iam.gserviceaccount.com \
   --project=<project-id> \
   --memory=<memory> \
   --timeout=<timeout> \
