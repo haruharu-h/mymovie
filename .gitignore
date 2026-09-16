@@ -36,15 +36,11 @@ playwright/.cache/
 /notes/
 /CLAUDE.md
 
-# Terraform（.terraform.lock.hclとterraform.tfvarsはコミット対象。ここでは除外しない）
-.terraform/
-*.tfstate
-*.tfstate.*
-crash.log
-crash.*.log
-override.tf
-override.tf.json
-*_override.tf
-*_override.tf.json
-# Secret Manager用の機密値。terraform.tfvars（非機密）とは別ファイルにして明示的に除外
-secrets.auto.tfvars
+# インフラのTerraform構成一式。実際のGCPプロジェクトID・サービスアカウント名等が
+# 直書きされており、転職活動のポートフォリオとして公開する上で特定の実アカウント情報を
+# 出したくないため、ディレクトリごとgit管理外にした（2026-09-16、docs/decisions.md参照）
+/infra/
+
+# frontend/.firebaserc: 実際のFirebase/GCPプロジェクトIDが入るためgit管理外。
+# frontend/.firebaserc.example をコピーして使う
+/frontend/.firebaserc

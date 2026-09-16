@@ -1,6 +1,6 @@
 -- Custom SQL migration file, put your code below! --
 
--- mymovie_appロール（infra/neon.tfのneon_roleリソースで作成、実行時Cloud Runが使う
+-- mymovie_appロール（インフラのTerraform構成（非公開）で作成、実行時Cloud Runが使う
 -- 最小権限ロール）に、既存テーブルへのCRUD権限のみを付与する。DDL（CREATE/ALTER/DROP等）は
 -- 意図的に許可しない。マイグレーション自体は引き続きowner（neondb_owner）で実行される。
 -- このスキーマは全テーブルがuuid().defaultRandom()でsequenceを使わないため、

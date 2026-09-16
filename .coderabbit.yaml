@@ -13,7 +13,6 @@ reviews:
     - "!**/node_modules/**"
     - "!**/dist/**"
     - "!**/build/**"
-    - "!infra/.terraform/**"
     - "!**/*.lock.hcl"
     - "!package-lock.json"
 
@@ -46,12 +45,6 @@ reviews:
         - ベンダー固有API（New Relic固有等）ではなく素のOpenTelemetry API
           （`trace.getActiveSpan()?.setAttribute()`等）を使っているか
         - span属性に1KB超の文字列・1000要素超の配列・PII・秘密情報・自由文を入れていないか
-
-    - path: "infra/**/*.tf"
-      instructions: |
-        - シークレットの値を通常の`変数`/`output`経由で渡し、tfstateに平文で残る書き方
-          （`secret_data`等）になっていないか。write-only引数（`secret_data_wo`等）を使うべき箇所か確認
-        - IAM権限が必要最小限（プロジェクト全体ではなく個別リソース単位）になっているか
 
     - path: ".github/workflows/**/*.yml"
       instructions: |

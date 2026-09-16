@@ -13,20 +13,17 @@ on:
       - '.github/workflows/deploy.yml'
 
 env:
-  GCP_PROJECT_ID: your-project-id
+  # GCP_PROJECT_ID/WORKLOAD_IDENTITY_PROVIDER/DEPLOYER_SERVICE_ACCOUNT/ARTIFACT_REGISTRY_REPO/
+  # BACKEND_URL/FRONTEND_URLは、実際のインフラを特定できる値のためリポジトリ変数
+  # （Settings > Secrets and variables > Actions > Variables）経由で渡す。
+  # インフラのTerraform構成自体は本リポジトリに含めていない
+  GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
   GCP_REGION: us-central1
-  # terraform output github_actions_workload_identity_provider / github_actions_service_account_email
-  # と一致させる。Cloud RunのURLと同じ「チキンエッグ」構造でここに直書きしている
-  # （infra/wif.tf自身がこの値を生成する側のため、自己参照はできない）
-  WORKLOAD_IDENTITY_PROVIDER: projects/your-project-number/locations/global/workloadIdentityPools/github-actions/providers/github-actions
-  DEPLOYER_SERVICE_ACCOUNT: deployer-service-account@your-project-id.iam.gserviceaccount.com
-  ARTIFACT_REGISTRY_REPO: us-central1-docker.pkg.dev/your-project-id/mymovie-backend
-  # terraform output相当。infra/cloud_run.tfのlocal.backend_url/frontend_urlと一致させる
-  BACKEND_URL: https://backend.example.com
-  # カスタムドメイン(frontend.example.com)に切り替え済み。フロントエンドのビルド(VITE_BACKEND_URL用の
-  # BACKEND_URLはbackend側なので変更不要)自体はこの値を直接使わないが、ドキュメント上の
-  # 一貫性のためcloud_run.tfのfrontend_urlと揃えておく
-  FRONTEND_URL: https://frontend.example.com
+  WORKLOAD_IDENTITY_PROVIDER: ${{ vars.WORKLOAD_IDENTITY_PROVIDER }}
+  DEPLOYER_SERVICE_ACCOUNT: ${{ vars.DEPLOYER_SERVICE_ACCOUNT }}
+  ARTIFACT_REGISTRY_REPO: ${{ vars.ARTIFACT_REGISTRY_REPO }}
+  BACKEND_URL: ${{ vars.BACKEND_URL }}
+  FRONTEND_URL: ${{ vars.FRONTEND_URL }}
 
 permissions:
   contents: read

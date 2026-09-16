@@ -57,12 +57,12 @@ gcloud functions deploy processAvatar \
   --region=us-central1 \
   --source=. \
   --entry-point=processAvatar \
-  --trigger-bucket=your-project-id-avatars \
+  --trigger-bucket=<project-id>-avatars \
   --trigger-location=us-central1 \
-  --service-account=runtime-service-account@your-project-id.iam.gserviceaccount.com \
-  --trigger-service-account=runtime-service-account@your-project-id.iam.gserviceaccount.com \
-  --build-service-account=projects/your-project-id/serviceAccounts/build-service-account@your-project-id.iam.gserviceaccount.com \
-  --project=your-project-id \
+  --service-account=runtime-service-account@<project-id>.iam.gserviceaccount.com \
+  --trigger-service-account=runtime-service-account@<project-id>.iam.gserviceaccount.com \
+  --build-service-account=projects/<project-id>/serviceAccounts/build-service-account@<project-id>.iam.gserviceaccount.com \
+  --project=<project-id> \
   --memory=<memory> \
   --timeout=<timeout> \
   --max-instances=<max-instances> \
@@ -87,7 +87,8 @@ describe`でpushサブスクリプションのOIDC発行元を確認済み）。
 意図して選ぶ」参照）。
 
 サービスアカウント（ランタイム用・ビルド用の両方）・GCSバケットIAM・必要なAPI有効化は
-`infra/avatar_worker.tf`でTerraform管理している（`terraform apply`を先に実行しておくこと）。
+Terraformで管理している（インフラのTerraform構成自体は本リポジトリには含めていない。
+`terraform apply`を先に実行しておくこと）。
 デプロイ手段自体（このコマンドの実行）はTerraformで自動化していないが、**関数本体
 （`google_cloudfunctions2_function`）は`terraform import`でTerraform管理下に取り込み済み**
 なので、再デプロイ後は`terraform plan`で設定差分（意図しない変更）が無いか確認できる
@@ -96,7 +97,7 @@ describe`でpushサブスクリプションのOIDC発行元を確認済み）。
 ### 初回デプロイ時にハマった点（同じ構成を再現するときのメモ）
 
 初回デプロイ時、以下の順番でエラーにぶつかった。2回目以降のデプロイでは通常発生しない
-（権限は`infra/avatar_worker.tf`に反映済みのため）が、記録として残す。
+（権限はTerraform側に反映済みのため）が、記録として残す。
 
 1. **`Permission denied while using the Eventarc Service Agent`** —
    `eventarc.googleapis.com`を有効化した直後は、サービスエージェントへの権限反映に
@@ -122,7 +123,7 @@ node -e "
 import('./dist/processAvatar.js').then(async ({ processAvatarObject }) => {
   const { Storage } = await import('@google-cloud/storage')
   const storage = new Storage()
-  await processAvatarObject(storage, { bucket: 'your-project-id-avatars', name: 'avatars/<test-user-id>' })
+  await processAvatarObject(storage, { bucket: '<project-id>-avatars', name: 'avatars/<test-user-id>' })
 })
 "
 ```
@@ -132,5 +133,5 @@ import('./dist/processAvatar.js').then(async ({ processAvatarObject }) => {
 
 ```bash
 gcloud logging read 'resource.type="cloud_run_revision" resource.labels.service_name="processavatar"' \
-  --project=your-project-id --limit=20 --freshness=5m
+  --project=<project-id> --limit=20 --freshness=5m
 ```

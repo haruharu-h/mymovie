@@ -1,6 +1,6 @@
 -- Custom SQL migration file, put your code below! --
 
--- looker_studio_readonlyロール（infra/neon.tfのneon_roleリソースで作成、Looker Studioが
+-- looker_studio_readonlyロール（インフラのTerraform構成（非公開）で作成、Looker Studioが
 -- リードレプリカ経由で接続する読み取り専用ロール）に、ビジネス観点のダッシュボードに必要な
 -- 最小限のテーブル・列だけSELECTを許可する。
 --
