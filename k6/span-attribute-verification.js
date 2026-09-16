@@ -2,13 +2,10 @@ import http from 'k6/http'
 import { check, sleep } from 'k6'
 
 // span属性・ビジネスイベントログ（movie.registration_result/review.creation_result）が
-// New Relicに実際に届くかを確認するための軽い検証スクリプト。
-// write-ceiling.js等の「限界を探る」負荷試験とは目的が違うため、低VUに抑え、
-// argon2（パスワードハッシュ）はsetup()の1回だけにする
-// （トラックBで発覚した「argon2がlibuvスレッドプールを占有し無関係なリクエストを
-// 巻き込む」問題を再現しないため。詳細: docs/decisions.md「フェーズ7-5」トラックB）。
-// トレースはNew Relic側でサンプリングされるため、ある程度の件数を回して
-// 何件かは間引かれずに残ることを狙う。
+// New Relicに実際に届くかを確認する軽い検証スクリプト。低VUに抑え、argon2は
+// setup()の1回のみ呼ぶ（libuvスレッドプール占有を避けるため。詳細: docs/decisions.md
+// 「フェーズ7-5」トラックB）。トレースはNew Relic側でサンプリングされるため、
+// ある程度の件数を回して間引かれず残る件数を確保する
 const BASE_URL = __ENV.BASE_URL || 'http://backend:3000'
 const PASSWORD = 'k6-password-123'
 const RUN_ID = Math.floor(Math.random() * 1e9)

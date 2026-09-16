@@ -13,11 +13,9 @@ export async function processAvatarObject(storage: Storage, data: StorageObjectF
   const file = storage.bucket(data.bucket).file(data.name)
 
   // イベントに含まれるmetadataスナップショットではなく、GCSの現在の実体を都度問い合わせる。
-  // イベントのmetadataは「発火した時点」のものなので、Eventarc/Pub-Subが同じイベントを
-  // 本当に重複配信した場合（自己上書きによる新規イベントではなく、単なる再送）、
-  // スナップショットは「未処理だった時点」のまま古くなっており、実際には既に処理済みでも
-  // 見逃してしまう（実機テストで発見）。常に最新のメタデータを見ることで、自己上書きに
-  // よる再発火と、Eventarc自体の重複配信の両方を同じ仕組みで防げる
+  // イベント側は発火時点のスナップショットのため、Eventarcが同じイベントを重複配信した
+  // 場合に「未処理だった時点」のまま古く、既に処理済みでも見逃す恐れがある。常に最新の
+  // メタデータを見ることで、自己上書きによる再発火とEventarc自体の重複配信を両方防げる
   const [liveMetadata] = await file.getMetadata()
   if (isAlreadyProcessed(liveMetadata.metadata)) {
     console.log(`Skipping already-processed object: ${data.name}`)

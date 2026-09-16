@@ -29,7 +29,6 @@ export const options = {
         { duration: '30s', target: 100 },
         { duration: '30s', target: 150 },
         { duration: '30s', target: 200 },
-        // さらに上まで伸ばす
         { duration: '30s', target: 300 },
         { duration: '30s', target: 500 },
         { duration: '30s', target: 800 },

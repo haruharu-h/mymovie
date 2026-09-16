@@ -65,13 +65,9 @@ export function buildApp(deps: AppDeps, options: BuildAppOptions): FastifyInstan
   }
 
   // FRONTEND_URL未設定（テスト等）はローカルのフロントエンドのデフォルト値にフォールバックする。
-  // methodsは@fastify/corsのデフォルト（'GET,HEAD,POST'のみ）だとPATCH/DELETEが
-  // 含まれず、本番（フロント・バックが別ドメインのクロスサイト構成）でCORSプリフライトに
-  // 弾かれてPATCH/DELETEを使う全ルート（プロフィール編集・レビュー編集・レビュー削除・
-  // フォロー解除・アバター確認等）が動かなくなる。ローカル/E2Eはvite devサーバーの
-  // proxyで同一オリジンに見えるため、この種のバグはテストで検出できず本番でのみ顕在化する
-  // （`docs/testing.md`「クロスオリジン特有のバグ」と同じ構造。今回はアバター機能の
-  // 本番動作確認で発覚）。実際に使っているメソッドを明示する
+  // @fastify/corsのデフォルトmethods('GET,HEAD,POST'のみ)にはPATCH/DELETEが含まれず、
+  // 本番（フロント・バックが別ドメイン）のCORSプリフライトで弾かれるため明示する
+  // （`docs/testing.md`「クロスオリジン特有のバグ」参照）
   app.register(cors, {
     origin: process.env.FRONTEND_URL ?? 'http://localhost:5173',
     credentials: true,

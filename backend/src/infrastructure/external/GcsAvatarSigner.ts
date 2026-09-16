@@ -39,13 +39,10 @@ export class GcsAvatarSigner {
     return { uploadUrl: policy.url, fields: policy.fields }
   }
 
-  // クライアントからの入力に依存せず、バケット名+userId+versionだけから決まる値。
-  // オブジェクトキーはuserIdごとに固定（再アップロードは常に上書き）なため、URLも
-  // versionを付けない限りアップロードのたびに同じ文字列になり、ブラウザ/中間キャッシュが
-  // GCSのデフォルトCache-Control（`public, max-age=3600`）に従って最大1時間古い画像を
-  // 返し続けてしまう。versionをクエリパラメータとして付与し、更新のたびに別URL扱いにする
-  // ことでキャッシュを強制的に無効化する（`docs/decisions.md`「アバター画像の
-  // キャッシュ無効化」参照）
+  // オブジェクトキーはuserIdごとに固定のため、versionを付けない限りURLが再アップロード後も
+  // 変わらず、GCSのデフォルトCache-Control（max-age=3600）で最大1時間古い画像が返り続ける。
+  // versionをクエリに付けて別URL扱いにすることでキャッシュを無効化する
+  // （`docs/decisions.md`「アバター画像のキャッシュ無効化」参照）
   getPublicUrl(userId: string, version: number): string {
     return `https://storage.googleapis.com/${this.bucketName}/${this.objectKey(userId)}?v=${version}`
   }
