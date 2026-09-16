@@ -1,9 +1,16 @@
 title = "mymovie custom gitleaks rules"
 
-# このプロジェクト固有の「実アカウント識別子」の正本（single source of truth）。
-# 2026-09-16の監査で繰り返し見落としが発生したため、二度と混入させないよう
-# 機械的に強制するためのルールセット。新しい実アカウント識別子（新GCPプロジェクト・
-# 新ドメイン・新しい個人メール等）を扱うときは、他のどの作業より先にここへ追記すること。
+# このプロジェクト固有の「実アカウント識別子」を検知するルール。
+# 実際の値をgitに残さないよう、このファイル自体はテンプレート（プレースホルダー版）
+# としてコミットし、本物の値を入れた実ファイル（.gitleaks.toml）はgitignore対象にする。
+#
+# セットアップ: このファイルを .gitleaks.toml にコピーし、各regexを実際の値に置き換える。
+#   cp .gitleaks.toml.example .gitleaks.toml
+#
+# CI（.github/workflows/secret-scan.yml）は、このファイルの内容をそのまま使うのではなく、
+# GitHub Actionsのリポジトリシークレット（GITLEAKS_CONFIG_TOML）に登録した本物の設定内容を
+# 実行時に読み込む。ローカルのpre-commitフックは .gitleaks.toml（gitignore対象、実ファイル）
+# を直接参照する。
 #
 # 実行方法:
 #   - ローカルのpre-commitフック（.githooks/pre-commit）が自動実行
@@ -18,14 +25,14 @@ useDefault = true
 
 [[rules]]
 id = "mymovie-real-gcp-project-id"
-description = "実際のGCPプロジェクトID（your-project-id）。infra/配下（git管理外）でのみ使用可"
-regex = '''your-project-id'''
+description = "実際のGCPプロジェクトID。infra/配下（git管理外）でのみ使用可"
+regex = '''your-project-id-here'''
 tags = ["mymovie", "gcp"]
 
 [[rules]]
 id = "mymovie-real-gcp-project-number"
-description = "実際のGCPプロジェクト番号（your-project-number）"
-regex = '''your-project-number'''
+description = "実際のGCPプロジェクト番号"
+regex = '''000000000000'''
 tags = ["mymovie", "gcp"]
 
 [[rules]]
@@ -35,8 +42,8 @@ regex = '''your-work-domain\.example'''
 tags = ["mymovie", "pii"]
 
 [[rules]]
-id = "mymovie-docomo-email-domain"
-description = "個人のdocomoメールドメイン"
+id = "mymovie-personal-email-domain"
+description = "個人のメールドメイン（携帯キャリア等）"
 regex = '''your-personal-domain\.example'''
 tags = ["mymovie", "pii"]
 

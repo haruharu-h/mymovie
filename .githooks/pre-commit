@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # 実際のGCPアカウント識別子・個人情報がコミットに混入するのを防ぐpre-commitフック。
-# ルールの正本は .gitleaks.toml。有効化: git config core.hooksPath .githooks
+# ルールの正本は .gitleaks.toml（実ファイルはgitignore対象。無ければ
+# .gitleaks.toml.example をコピーして実際の値を埋める）。
+# 有効化: git config core.hooksPath .githooks
 set -euo pipefail
 
 if ! command -v gitleaks >/dev/null 2>&1; then
@@ -10,6 +12,13 @@ if ! command -v gitleaks >/dev/null 2>&1; then
 fi
 
 repo_root="$(git rev-parse --show-toplevel)"
+
+if [ ! -f "$repo_root/.gitleaks.toml" ]; then
+  echo "⚠️  $repo_root/.gitleaks.toml が無いため、プロジェクト固有のチェックはスキップします" >&2
+  echo "   （.gitleaks.toml.example をコピーして実際の値を埋めてください）。" >&2
+  echo "   CI（.github/workflows/secret-scan.yml）で最終的に検知されます。" >&2
+  exit 0
+fi
 
 if ! gitleaks protect --staged --source "$repo_root" --config "$repo_root/.gitleaks.toml" --no-banner; then
   echo "" >&2

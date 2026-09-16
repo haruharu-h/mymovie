@@ -44,3 +44,8 @@ playwright/.cache/
 # frontend/.firebaserc: 実際のFirebase/GCPプロジェクトIDが入るためgit管理外。
 # frontend/.firebaserc.example をコピーして使う
 /frontend/.firebaserc
+
+# .gitleaks.toml: 実際のプロジェクトID・個人メール等をregexパターンとして含むためgit管理外
+# （検知ルール自体が漏洩源にならないように）。.gitleaks.toml.example をコピーして使う。
+# CI（secret-scan.yml）はGitHub Actionsシークレット(GITLEAKS_CONFIG_TOML)経由で内容を渡す
+/.gitleaks.toml
