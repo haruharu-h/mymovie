@@ -13,12 +13,12 @@ reviews:
     - "!**/node_modules/**"
     - "!**/dist/**"
     - "!**/build/**"
-    - "!app/infra/.terraform/**"
+    - "!infra/.terraform/**"
     - "!**/*.lock.hcl"
     - "!package-lock.json"
 
   path_instructions:
-    - path: "app/backend/src/**/*.ts"
+    - path: "backend/src/**/*.ts"
       instructions: |
         このプロジェクトの規約に沿っているか確認してください。
         - `any` を使っていないか（型不明なら `unknown` + 型ガード）
@@ -28,26 +28,26 @@ reviews:
           システムエラー（DB接続失敗・環境変数未設定等）は通常の `Error` を使っているか
         - ユーザーに返すエラーメッセージは日本語、サーバー内部のログ・システムエラーは英語になっているか
 
-    - path: "app/backend/src/domain/**/*.ts"
+    - path: "backend/src/domain/**/*.ts"
       instructions: |
         - 値オブジェクトは `private constructor` + `static create()` でバリデーションを強制しているか
         - エンティティは `public constructor`（リポジトリからの復元用）になっているか
         - 「誰が操作できるか」の判断をApplication層で `entity.userId !== userId` のように直接比較せず、
           エンティティ自身にメソッド（例: `canBeDeletedBy(userId)`）を生やして委譲しているか
 
-    - path: "app/backend/src/infrastructure/**/*.ts"
+    - path: "backend/src/infrastructure/**/*.ts"
       instructions: |
         - DBの生データをリポジトリ内で必ずDomainクラスに変換して返しているか（生データを外に漏らしていないか）
         - 外部API連携でAPIキー・トークンをURLのクエリパラメータに埋め込んでいないか
           （ヘッダー経由にすべき。過去にTMDB APIキーがspan属性経由で漏洩した事故があるための重点確認項目）
 
-    - path: "app/backend/src/**/telemetry*.ts"
+    - path: "backend/src/**/telemetry*.ts"
       instructions: |
         - ベンダー固有API（New Relic固有等）ではなく素のOpenTelemetry API
           （`trace.getActiveSpan()?.setAttribute()`等）を使っているか
         - span属性に1KB超の文字列・1000要素超の配列・PII・秘密情報・自由文を入れていないか
 
-    - path: "app/infra/**/*.tf"
+    - path: "infra/**/*.tf"
       instructions: |
         - シークレットの値を通常の`変数`/`output`経由で渡し、tfstateに平文で残る書き方
           （`secret_data`等）になっていないか。write-only引数（`secret_data_wo`等）を使うべき箇所か確認

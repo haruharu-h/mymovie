@@ -8,8 +8,8 @@ on:
   push:
     branches: [main]
     paths:
-      - 'app/backend/**'
-      - 'app/frontend/**'
+      - 'backend/**'
+      - 'frontend/**'
       - '.github/workflows/deploy.yml'
 
 env:
@@ -17,11 +17,11 @@ env:
   GCP_REGION: us-central1
   # terraform output github_actions_workload_identity_provider / github_actions_service_account_email
   # と一致させる。Cloud RunのURLと同じ「チキンエッグ」構造でここに直書きしている
-  # （app/infra/wif.tf自身がこの値を生成する側のため、自己参照はできない）
+  # （infra/wif.tf自身がこの値を生成する側のため、自己参照はできない）
   WORKLOAD_IDENTITY_PROVIDER: projects/your-project-number/locations/global/workloadIdentityPools/github-actions/providers/github-actions
   DEPLOYER_SERVICE_ACCOUNT: deployer-service-account@your-project-id.iam.gserviceaccount.com
   ARTIFACT_REGISTRY_REPO: us-central1-docker.pkg.dev/your-project-id/mymovie-backend
-  # terraform output相当。app/infra/cloud_run.tfのlocal.backend_url/frontend_urlと一致させる
+  # terraform output相当。infra/cloud_run.tfのlocal.backend_url/frontend_urlと一致させる
   BACKEND_URL: https://backend.example.com
   # カスタムドメイン(frontend.example.com)に切り替え済み。フロントエンドのビルド(VITE_BACKEND_URL用の
   # BACKEND_URLはbackend側なので変更不要)自体はこの値を直接使わないが、ドキュメント上の
@@ -36,12 +36,12 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: app/backend
+        working-directory: backend
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version-file: app/backend/.nvmrc
+          node-version-file: backend/.nvmrc
       - run: npm ci
       - run: npm test
       # Testcontainersが実DB(PostgreSQL)コンテナを起動する。GitHub Actionsのubuntu-latest
@@ -82,7 +82,7 @@ jobs:
           docker buildx build --builder ci-builder --target production \
             --cache-from "type=registry,ref=$CACHE_IMAGE" \
             --cache-to "type=registry,ref=$CACHE_IMAGE,mode=max" \
-            -t "$IMAGE" --push app/backend
+            -t "$IMAGE" --push backend
           echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
 
   migrate:
@@ -93,12 +93,12 @@ jobs:
       id-token: write
     defaults:
       run:
-        working-directory: app/backend
+        working-directory: backend
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version-file: app/backend/.nvmrc
+          node-version-file: backend/.nvmrc
       - run: npm ci
       - uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed # v2.1.13
         with:
@@ -144,12 +144,12 @@ jobs:
       id-token: write
     defaults:
       run:
-        working-directory: app/frontend
+        working-directory: frontend
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version-file: app/frontend/.nvmrc
+          node-version-file: frontend/.nvmrc
       - run: npm ci
       - run: npm run build
         env:

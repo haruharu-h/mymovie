@@ -25,7 +25,7 @@ npm-debug.log*
 # Docker
 .docker/
 
-# Playwright (app/e2e)
+# Playwright (e2e)
 test-results/
 playwright-report/
 blob-report/
