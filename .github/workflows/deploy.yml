@@ -14,16 +14,19 @@ on:
 
 env:
   # GCP_PROJECT_ID/WORKLOAD_IDENTITY_PROVIDER/DEPLOYER_SERVICE_ACCOUNT/ARTIFACT_REGISTRY_REPO/
-  # BACKEND_URL/FRONTEND_URLは、実際のインフラを特定できる値のためリポジトリ変数
-  # （Settings > Secrets and variables > Actions > Variables）経由で渡す。
+  # BACKEND_URL/FRONTEND_URLは、実際のインフラを特定できる値のためリポジトリシークレット
+  # （Settings > Secrets and variables > Actions > Secrets）経由で渡す。
+  # リポジトリ変数(vars)はジョブログを自動マスクしないため、値がgcloud/firebaseコマンドの
+  # 実行結果としてログに出力されても平文で残ってしまう。シークレットとして登録した値は
+  # ログに出現すると自動的に***へマスクされるため、こちらを使う。
   # インフラのTerraform構成自体は本リポジトリに含めていない
-  GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   GCP_REGION: us-central1
-  WORKLOAD_IDENTITY_PROVIDER: ${{ vars.WORKLOAD_IDENTITY_PROVIDER }}
-  DEPLOYER_SERVICE_ACCOUNT: ${{ vars.DEPLOYER_SERVICE_ACCOUNT }}
-  ARTIFACT_REGISTRY_REPO: ${{ vars.ARTIFACT_REGISTRY_REPO }}
-  BACKEND_URL: ${{ vars.BACKEND_URL }}
-  FRONTEND_URL: ${{ vars.FRONTEND_URL }}
+  WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+  DEPLOYER_SERVICE_ACCOUNT: ${{ secrets.DEPLOYER_SERVICE_ACCOUNT }}
+  ARTIFACT_REGISTRY_REPO: ${{ secrets.ARTIFACT_REGISTRY_REPO }}
+  BACKEND_URL: ${{ secrets.BACKEND_URL }}
+  FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
 
 permissions:
   contents: read
