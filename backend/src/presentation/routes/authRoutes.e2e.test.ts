@@ -5,12 +5,17 @@ import { RegisterUser } from '../../application/auth/RegisterUser.js'
 import { LoginUser } from '../../application/auth/LoginUser.js'
 import { RefreshToken } from '../../application/auth/RefreshToken.js'
 import { LogoutUser } from '../../application/auth/LogoutUser.js'
+import { RequestPasswordReset } from '../../application/auth/RequestPasswordReset.js'
+import { ResetPassword } from '../../application/auth/ResetPassword.js'
 import { Identity } from '../../domain/auth/Identity.js'
 import { Password } from '../../domain/auth/Password.js'
+import { VerificationToken } from '../../domain/auth/VerificationToken.js'
 import type { IIdentityRepository } from '../../domain/auth/IIdentityRepository.js'
 import type { IUserRepository } from '../../domain/user/IUserRepository.js'
 import type { ISessionRepository } from '../../domain/auth/ISessionRepository.js'
+import type { IVerificationTokenRepository } from '../../domain/auth/IVerificationTokenRepository.js'
 import type { IAuditLogRepository } from '../../domain/shared/IAuditLogRepository.js'
+import type { IMailSender } from '../../domain/shared/IMailSender.js'
 import type { JwtService } from '../../application/shared/JwtService.js'
 
 // E2E（HTTPレベル）: リポジトリと JwtService だけ偽物にし、
@@ -19,7 +24,9 @@ describe('auth routes (E2E)', () => {
   let identityRepository: jest.Mocked<IIdentityRepository>
   let userRepository: jest.Mocked<IUserRepository>
   let sessionRepository: jest.Mocked<ISessionRepository>
+  let verificationTokenRepository: jest.Mocked<IVerificationTokenRepository>
   let auditLogRepository: jest.Mocked<IAuditLogRepository>
+  let mailSender: jest.Mocked<IMailSender>
   let jwtService: jest.Mocked<JwtService>
   let app: FastifyInstance
 
@@ -27,6 +34,8 @@ describe('auth routes (E2E)', () => {
     identityRepository = {
       save: jest.fn<IIdentityRepository['save']>(),
       findByProviderAndProviderId: jest.fn<IIdentityRepository['findByProviderAndProviderId']>(),
+      findByUserIdAndProvider: jest.fn<IIdentityRepository['findByUserIdAndProvider']>(),
+      updatePasswordHash: jest.fn<IIdentityRepository['updatePasswordHash']>(),
     }
     userRepository = {
       save: jest.fn<IUserRepository['save']>(),
@@ -41,9 +50,20 @@ describe('auth routes (E2E)', () => {
       findByRefreshTokenHash: jest.fn<ISessionRepository['findByRefreshTokenHash']>(),
       updateRefreshTokenHash: jest.fn<ISessionRepository['updateRefreshTokenHash']>(),
       delete: jest.fn<ISessionRepository['delete']>(),
+      deleteAllByUserId: jest.fn<ISessionRepository['deleteAllByUserId']>(),
+    }
+    verificationTokenRepository = {
+      save: jest.fn<IVerificationTokenRepository['save']>(),
+      findByTokenHash: jest.fn<IVerificationTokenRepository['findByTokenHash']>(),
+      markConsumed: jest.fn<IVerificationTokenRepository['markConsumed']>(),
+      deleteActiveByUserIdAndPurpose: jest.fn<IVerificationTokenRepository['deleteActiveByUserIdAndPurpose']>(),
     }
     auditLogRepository = {
       save: jest.fn<IAuditLogRepository['save']>(),
+    }
+    mailSender = {
+      sendPasswordResetEmail: jest.fn<IMailSender['sendPasswordResetEmail']>(),
+      sendEmailConfirmation: jest.fn<IMailSender['sendEmailConfirmation']>(),
     }
     jwtService = {
       generateAccessToken: jest.fn<JwtService['generateAccessToken']>(),
@@ -61,6 +81,12 @@ describe('auth routes (E2E)', () => {
           loginUser: new LoginUser(identityRepository, sessionRepository, auditLogRepository, jwtService),
           refreshToken: new RefreshToken(sessionRepository, auditLogRepository, jwtService),
           logoutUser: new LogoutUser(sessionRepository, auditLogRepository, jwtService),
+          requestPasswordReset: new RequestPasswordReset(
+            identityRepository, verificationTokenRepository, auditLogRepository, mailSender, jwtService,
+          ),
+          resetPassword: new ResetPassword(
+            identityRepository, sessionRepository, verificationTokenRepository, auditLogRepository, jwtService,
+          ),
         },
       },
       { logger: false, forceFlushTelemetry: false },
@@ -179,5 +205,63 @@ describe('auth routes (E2E)', () => {
 
     expect(res.statusCode).toBe(401)
     expect(res.cookies.find(c => c.name === 'refresh_token')).toBeUndefined()
+  })
+
+  it('POST /auth/password-reset/request 成功: 204、メールアドレス未登録でも同じ204', async () => {
+    identityRepository.findByProviderAndProviderId.mockResolvedValue(null)
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/auth/password-reset/request',
+      payload: { email: 'not-registered@example.com' },
+    })
+
+    expect(res.statusCode).toBe(204)
+    expect(mailSender.sendPasswordResetEmail).not.toHaveBeenCalled()
+  })
+
+  it('POST /auth/password-reset/request emailが無ければ 400（Zodスキーマによるバリデーション）', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/auth/password-reset/request',
+      payload: {},
+    })
+
+    expect(res.statusCode).toBe(400)
+    expect(identityRepository.findByProviderAndProviderId).not.toHaveBeenCalled()
+  })
+
+  it('POST /auth/password-reset/confirm 無効なトークン: 400・body は { message }', async () => {
+    verificationTokenRepository.findByTokenHash.mockResolvedValue(null)
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/auth/password-reset/confirm',
+      payload: { token: 'invalid-token', newPassword: 'new-password123' },
+    })
+
+    expect(res.statusCode).toBe(400)
+    expect(res.json()).toHaveProperty('message')
+  })
+
+  it('POST /auth/password-reset/confirm 成功: 204、パスワード更新・全セッション削除', async () => {
+    const token = new VerificationToken(
+      'token-1', 'user-1', 'password_reset', 'hashed-token',
+      new Date(Date.now() + 60 * 60 * 1000), null, new Date(),
+    )
+    verificationTokenRepository.findByTokenHash.mockResolvedValue(token)
+    identityRepository.findByUserIdAndProvider.mockResolvedValue(
+      new Identity('identity-1', 'user-1', 'email', 'test@example.com', 'old-hash', new Date()),
+    )
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/auth/password-reset/confirm',
+      payload: { token: 'raw-token', newPassword: 'new-password123' },
+    })
+
+    expect(res.statusCode).toBe(204)
+    expect(identityRepository.updatePasswordHash).toHaveBeenCalledWith('identity-1', expect.any(String))
+    expect(sessionRepository.deleteAllByUserId).toHaveBeenCalledWith('user-1')
   })
 })

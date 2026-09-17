@@ -40,4 +40,31 @@ export class DrizzleIdentityRepository implements IIdentityRepository {
       row.createdAt,
     )
   }
+
+  async findByUserIdAndProvider(
+    userId: string,
+    provider: 'email' | 'google' | 'github',
+  ): Promise<Identity | null> {
+    const row = await this.db.query.identities.findFirst({
+      where: and(eq(identities.userId, userId), eq(identities.provider, provider)),
+    })
+
+    if (!row) return null
+
+    return new Identity(
+      row.id,
+      row.userId,
+      row.provider as 'email' | 'google' | 'github',
+      row.providerId,
+      row.passwordHash,
+      row.createdAt,
+    )
+  }
+
+  async updatePasswordHash(identityId: string, newPasswordHash: string): Promise<void> {
+    await this.db
+      .update(identities)
+      .set({ passwordHash: newPasswordHash })
+      .where(eq(identities.id, identityId))
+  }
 }

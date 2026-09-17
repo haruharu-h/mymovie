@@ -62,4 +62,20 @@ describe('DrizzleSessionRepository', () => {
       expect(await repository.findByRefreshTokenHash('hash')).toBeNull()
     })
   })
+
+  describe('deleteAllByUserId', () => {
+    it('そのユーザーの全セッションを削除する（パスワードリセット時の強制ログアウト用）', async () => {
+      const user = await createTestUser(testDb.db)
+      const otherUser = await createTestUser(testDb.db)
+      await repository.save(new Session('44444444-4444-4444-4444-444444444444', user.id, 'hash-1', new Date('2030-01-01'), new Date()))
+      await repository.save(new Session('55555555-5555-5555-5555-555555555555', user.id, 'hash-2', new Date('2030-01-01'), new Date()))
+      await repository.save(new Session('66666666-6666-6666-6666-666666666666', otherUser.id, 'hash-3', new Date('2030-01-01'), new Date()))
+
+      await repository.deleteAllByUserId(user.id)
+
+      expect(await repository.findByRefreshTokenHash('hash-1')).toBeNull()
+      expect(await repository.findByRefreshTokenHash('hash-2')).toBeNull()
+      expect(await repository.findByRefreshTokenHash('hash-3')).not.toBeNull()
+    })
+  })
 })

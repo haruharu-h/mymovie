@@ -11,9 +11,11 @@ import { DrizzleAuditLogRepository } from '../infrastructure/repository/DrizzleA
 import { DrizzleMovieRepository } from '../infrastructure/repository/DrizzleMovieRepository.js'
 import { DrizzleReviewRepository } from '../infrastructure/repository/DrizzleReviewRepository.js'
 import { DrizzleFollowRepository } from '../infrastructure/repository/DrizzleFollowRepository.js'
+import { DrizzleVerificationTokenRepository } from '../infrastructure/repository/DrizzleVerificationTokenRepository.js'
 import { TmdbApiClient } from '../infrastructure/external/TmdbApiClient.js'
 import { GitHubApiClient } from '../infrastructure/external/GitHubApiClient.js'
 import { GcsAvatarSigner } from '../infrastructure/external/GcsAvatarSigner.js'
+import { SendGridMailSender } from '../infrastructure/external/SendGridMailSender.js'
 import { createLogger } from '../infrastructure/logger.js'
 import { JwtService } from '../application/shared/JwtService.js'
 import { Google, GitHub } from 'arctic'
@@ -26,6 +28,8 @@ import { RefreshToken } from '../application/auth/RefreshToken.js'
 import { LogoutUser } from '../application/auth/LogoutUser.js'
 import { GoogleLogin } from '../application/auth/GoogleLogin.js'
 import { GitHubLogin } from '../application/auth/GitHubLogin.js'
+import { RequestPasswordReset } from '../application/auth/RequestPasswordReset.js'
+import { ResetPassword } from '../application/auth/ResetPassword.js'
 import { SearchMovies } from '../application/movie/SearchMovies.js'
 import { RegisterMovie } from '../application/movie/RegisterMovie.js'
 import { GetMovieDetail } from '../application/movie/GetMovieDetail.js'
@@ -67,9 +71,11 @@ const auditLogRepository = new DrizzleAuditLogRepository(db)
 const movieRepository = new DrizzleMovieRepository(db)
 const reviewRepository = new DrizzleReviewRepository(db)
 const followRepository = new DrizzleFollowRepository(db)
+const verificationTokenRepository = new DrizzleVerificationTokenRepository(db)
 const tmdbApiClient = new TmdbApiClient()
 const gitHubApiClient = new GitHubApiClient()
 const gcsAvatarSigner = new GcsAvatarSigner()
+const mailSender = new SendGridMailSender()
 const jwtService = new JwtService()
 // request.log（Fastifyがリクエスト到着時に生成するもの）は起動時点でまだ存在しないため使えない。
 // movieRepository/tmdbApiClientと同じく、起動時に1回だけ作って全ユースケースで使い回す。
@@ -120,6 +126,20 @@ export function buildAuthDeps(): AuthRouteDeps {
     loginUser: new LoginUser(identityRepository, sessionRepository, auditLogRepository, jwtService),
     refreshToken: new RefreshToken(sessionRepository, auditLogRepository, jwtService),
     logoutUser: new LogoutUser(sessionRepository, auditLogRepository, jwtService),
+    requestPasswordReset: new RequestPasswordReset(
+      identityRepository,
+      verificationTokenRepository,
+      auditLogRepository,
+      mailSender,
+      jwtService,
+    ),
+    resetPassword: new ResetPassword(
+      identityRepository,
+      sessionRepository,
+      verificationTokenRepository,
+      auditLogRepository,
+      jwtService,
+    ),
   }
 }
 
