@@ -21,7 +21,7 @@ const RequestAvatarUploadUrlBodySchema = z.object({
 // name/birthdate/snsUrlの型チェックのみを担う。nameの具体的な日本語メッセージは
 // UserName値オブジェクト（UpdateUserProfile経由）が持つため、ここでは型のみ保証する
 const UpdateProfileBodySchema = z.object({
-  name: z.string().optional(),
+  name: z.string(),
   birthdate: z.string().nullable().optional(),
   snsUrl: z.string().nullable().optional(),
 })
@@ -79,7 +79,7 @@ export async function userRoutes(app: FastifyInstance, deps: UserRouteDeps) {
 
       await deps.updateUserProfile.execute({
         userId: request.userId,
-        name: name ?? '',
+        name,
         birthdate: birthdate ?? null,
         snsUrl: snsUrl ?? null,
       })
