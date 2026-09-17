@@ -1,5 +1,6 @@
 import { describe, it, expect, jest, beforeEach } from '@jest/globals'
 import { UpdateUserProfile } from './UpdateUserProfile.js'
+import { AppError } from '../../domain/shared/AppError.js'
 import type { IUserRepository } from '../../domain/user/IUserRepository.js'
 
 describe('UpdateUserProfile', () => {
@@ -31,5 +32,21 @@ describe('UpdateUserProfile', () => {
       birthdate: '1990-01-01',
       snsUrl: 'https://example.com',
     })
+  })
+
+  it('空白のみの名前なら AppError(400) を投げ、保存しない', async () => {
+    expect.assertions(3)
+    try {
+      await updateUserProfile.execute({
+        userId: 'user-1',
+        name: '   ',
+        birthdate: null,
+        snsUrl: null,
+      })
+    } catch (e) {
+      expect(e).toBeInstanceOf(AppError)
+      expect((e as AppError).statusCode).toBe(400)
+    }
+    expect(userRepository.updateProfile).not.toHaveBeenCalled()
   })
 })
