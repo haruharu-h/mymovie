@@ -43,4 +43,8 @@ export class DrizzleSessionRepository implements ISessionRepository {
   async delete(id: string): Promise<void> {
     await this.db.delete(sessions).where(eq(sessions.id, id))
   }
+
+  async deleteAllByUserId(userId: string): Promise<void> {
+    await this.db.delete(sessions).where(eq(sessions.userId, userId))
+  }
 }

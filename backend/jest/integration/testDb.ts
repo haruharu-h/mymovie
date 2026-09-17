@@ -26,7 +26,7 @@ export async function stopTestDb({ container }: TestDb): Promise<void> {
   await container.stop()
 }
 
-const ALL_TABLES = ['follows', 'sessions', 'audit_logs', 'reviews', 'movies', 'identities', 'users']
+const ALL_TABLES = ['follows', 'verification_tokens', 'sessions', 'audit_logs', 'reviews', 'movies', 'identities', 'users']
 
 export async function truncateAll(db: DbClient): Promise<void> {
   await db.execute(sql.raw(`TRUNCATE TABLE ${ALL_TABLES.join(', ')} RESTART IDENTITY CASCADE`))

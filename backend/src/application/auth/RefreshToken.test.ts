@@ -23,6 +23,7 @@ describe('RefreshToken', () => {
       findByRefreshTokenHash: jest.fn<ISessionRepository['findByRefreshTokenHash']>(),
       updateRefreshTokenHash: jest.fn<ISessionRepository['updateRefreshTokenHash']>(),
       delete: jest.fn<ISessionRepository['delete']>(),
+      deleteAllByUserId: jest.fn<ISessionRepository['deleteAllByUserId']>(),
     }
     auditLogRepository = { save: jest.fn<IAuditLogRepository['save']>() }
     jwtService = {

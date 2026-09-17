@@ -106,6 +106,30 @@ export const sessions = pgTable(
   ]
 )
 
+export const verificationTokens = pgTable(
+  'verification_tokens',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id),
+    purpose: text('purpose').notNull(),
+    tokenHash: text('token_hash').notNull(),
+    expiresAt: timestamp('expires_at').notNull(),
+    consumedAt: timestamp('consumed_at'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex('verification_tokens_token_hash_idx').on(t.tokenHash),
+    // 同一ユーザー・同一用途で未使用のトークンは常に1件だけ、という業務ルールをDB制約でも強制する
+    // （アプリ側は再発行時に既存の未使用トークンを明示的に無効化する。詳細: docs/decisions.md）
+    uniqueIndex('verification_tokens_user_id_purpose_active_idx')
+      .on(t.userId, t.purpose)
+      .where(sql`${t.consumedAt} IS NULL`),
+    index('idx_verification_tokens_user_id').on(t.userId),
+  ]
+)
+
 export const follows = pgTable(
   'follows',
   {

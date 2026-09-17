@@ -46,4 +46,37 @@ describe('DrizzleIdentityRepository', () => {
       ).rejects.toThrow()
     })
   })
+
+  describe('findByUserIdAndProvider', () => {
+    it('userId+providerでIdentityを取得できる', async () => {
+      const user = await createTestUser(testDb.db)
+      const identity = new Identity('22222222-2222-2222-2222-222222222222', user.id, 'email', 'yamada@example.com', 'hashed-password', new Date())
+      await repository.save(identity)
+
+      const found = await repository.findByUserIdAndProvider(user.id, 'email')
+
+      expect(found).toEqual(identity)
+    })
+
+    it('存在しない組み合わせの場合はnullを返す', async () => {
+      const user = await createTestUser(testDb.db)
+
+      const found = await repository.findByUserIdAndProvider(user.id, 'google')
+
+      expect(found).toBeNull()
+    })
+  })
+
+  describe('updatePasswordHash', () => {
+    it('passwordHashを更新できる', async () => {
+      const user = await createTestUser(testDb.db)
+      const identity = new Identity('22222222-2222-2222-2222-222222222222', user.id, 'email', 'yamada@example.com', 'old-hash', new Date())
+      await repository.save(identity)
+
+      await repository.updatePasswordHash(identity.id, 'new-hash')
+
+      const found = await repository.findByUserIdAndProvider(user.id, 'email')
+      expect(found?.passwordHash).toBe('new-hash')
+    })
+  })
 })

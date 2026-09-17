@@ -25,12 +25,15 @@ describe('LoginUser', () => {
     identityRepository = {
       save: jest.fn<IIdentityRepository['save']>(),
       findByProviderAndProviderId: jest.fn<IIdentityRepository['findByProviderAndProviderId']>(),
+      findByUserIdAndProvider: jest.fn<IIdentityRepository['findByUserIdAndProvider']>(),
+      updatePasswordHash: jest.fn<IIdentityRepository['updatePasswordHash']>(),
     }
     sessionRepository = {
       save: jest.fn<ISessionRepository['save']>(),
       findByRefreshTokenHash: jest.fn<ISessionRepository['findByRefreshTokenHash']>(),
       updateRefreshTokenHash: jest.fn<ISessionRepository['updateRefreshTokenHash']>(),
       delete: jest.fn<ISessionRepository['delete']>(),
+      deleteAllByUserId: jest.fn<ISessionRepository['deleteAllByUserId']>(),
     }
     auditLogRepository = {
       save: jest.fn<IAuditLogRepository['save']>(),
