@@ -1,8 +1,13 @@
 import { describe, it, expect } from '@jest/globals'
 import { VerificationToken } from './VerificationToken.js'
 
+type VerificationTokenOverrides = {
+  expiresAt?: Date
+  consumedAt?: Date | null
+}
+
 const buildToken = (
-  overrides: Partial<{ expiresAt: Date; consumedAt: Date | null }> = {},
+  overrides: VerificationTokenOverrides = {},
 ): VerificationToken =>
   new VerificationToken(
     'token-1',

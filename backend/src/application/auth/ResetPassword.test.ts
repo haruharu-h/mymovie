@@ -9,8 +9,14 @@ import type { IVerificationTokenRepository } from '../../domain/auth/IVerificati
 import type { IAuditLogRepository } from '../../domain/shared/IAuditLogRepository.js'
 import type { JwtService } from '../shared/JwtService.js'
 
+type VerificationTokenOverrides = {
+  purpose?: 'email_confirmation' | 'password_reset'
+  expiresAt?: Date
+  consumedAt?: Date | null
+}
+
 const buildToken = (
-  overrides: Partial<{ purpose: 'email_confirmation' | 'password_reset'; expiresAt: Date; consumedAt: Date | null }> = {},
+  overrides: VerificationTokenOverrides = {},
 ): VerificationToken =>
   new VerificationToken(
     'token-1',
