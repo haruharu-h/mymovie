@@ -49,6 +49,9 @@ export default function SignInPage() {
               className="w-full rounded border px-3 py-2 text-sm"
             />
           </div>
+          <p className="text-right text-sm">
+            <Link to="/forgot-password" className="underline">パスワードをお忘れですか？</Link>
+          </p>
           {error && <p className="text-sm text-red-500">{error}</p>}
           <button
             type="submit"

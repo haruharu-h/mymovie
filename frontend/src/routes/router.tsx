@@ -9,6 +9,8 @@ import FollowingPage from '@/pages/FollowingPage'
 import SearchPage from '@/pages/SearchPage'
 import SignInPage from '@/pages/SignInPage'
 import SignUpPage from '@/pages/SignUpPage'
+import ForgotPasswordPage from '@/pages/ForgotPasswordPage'
+import ResetPasswordPage from '@/pages/ResetPasswordPage'
 import PrivacyPolicyPage from '@/pages/PrivacyPolicyPage'
 import TermsPage from '@/pages/TermsPage'
 import AuthCallbackPage from '@/pages/AuthCallbackPage'
@@ -33,6 +35,8 @@ export const router = createBrowserRouter([
   { path: '/auth/callback', element: <AuthCallbackPage />, errorElement },
   { path: '/signin', element: <SignInPage /> },
   { path: '/signup', element: <SignUpPage /> },
+  { path: '/forgot-password', element: <ForgotPasswordPage /> },
+  { path: '/reset-password', element: <ResetPasswordPage /> },
   { path: '/privacy-policy', element: <PrivacyPolicyPage /> },
   { path: '/terms', element: <TermsPage /> },
   { path: '*', element: <NotFoundPage /> },
