@@ -73,8 +73,9 @@ export default function ResetPasswordPage() {
         <h1 className="text-2xl font-bold">新しいパスワードを設定</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1">
-            <label className="text-sm font-medium">新しいパスワード</label>
+            <label htmlFor="password" className="text-sm font-medium">新しいパスワード</label>
             <input
+              id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -83,8 +84,9 @@ export default function ResetPasswordPage() {
             />
           </div>
           <div className="space-y-1">
-            <label className="text-sm font-medium">新しいパスワード（確認）</label>
+            <label htmlFor="passwordConfirm" className="text-sm font-medium">新しいパスワード（確認）</label>
             <input
+              id="passwordConfirm"
               type="password"
               value={passwordConfirm}
               onChange={(e) => setPasswordConfirm(e.target.value)}
